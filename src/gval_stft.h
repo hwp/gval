@@ -24,13 +24,13 @@
 #ifndef GVAL_STFT_H_
 #define GVAL_STFT_H_
 
-#include <gst/gst.h>
+#include <gst/base/gstbasetransform.h>
 
 G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
 #define GVAL_TYPE_STFT \
-  (gval_sftf_get_type())
+  (gval_stft_get_type())
 #define GVAL_STFT(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST((obj),GVAL_TYPE_STFT,GvalStft))
 #define GVAL_STFT_CLASS(klass) \
@@ -41,11 +41,8 @@ G_BEGIN_DECLS
   (G_TYPE_CHECK_CLASS_TYPE((klass),GVAL_TYPE_STFT))
 
 typedef struct {
-  GstElement element;
+  GstBaseTransform base;
 
-  GstPad* sinkpad;
-  GstPad* srcpad;
-  
   gboolean silent;
   guint wsize;
   guint ssize;
@@ -58,10 +55,10 @@ typedef struct {
 } GvalStft;
 
 typedef struct {
-  GstElementClass parent_class;
+  GstBaseTransformClass parent_class;
 } GvalStftClass;
 
-GType gval_sftf_get_type(void);
+GType gval_stft_get_type(void);
 
 G_END_DECLS
 

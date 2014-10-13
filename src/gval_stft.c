@@ -4,20 +4,20 @@
  * gval_stft.c : Short Time Fourier Transform
  *
  * This program is free software; you can redistribute it
- * and/or modify it under the terms of the GNU General 
- * Public License as published by the Free Software 
+ * and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
- * This program is distributed in the hope that it will 
+ * This program is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the
  * implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
  *
- * You should have received a copy of the GNU General 
+ * You should have received a copy of the GNU General
  * Public License along with this program; if not, write
- * to the Free Software Foundation, Inc., 51 Franklin 
+ * to the Free Software Foundation, Inc., 51 Franklin
  * Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
@@ -32,8 +32,8 @@
 #include <gst/gst.h>
 #include <gsl/gsl_fft_complex.h>
 
-GST_DEBUG_CATEGORY_STATIC(gval_sftf_debug);
-#define GST_CAT_DEFAULT gval_sftf_debug
+GST_DEBUG_CATEGORY_STATIC(gval_stft_debug);
+#define GST_CAT_DEFAULT gval_stft_debug
 
 #define MIN_WINDOW_SIZE 4
 #define MAX_WINDOW_SIZE 65536
@@ -41,7 +41,7 @@ GST_DEBUG_CATEGORY_STATIC(gval_sftf_debug);
 
 #define MIN_SHIFT_SIZE 1
 #define MAX_SHIFT_SIZE 65536
-#define DEFAULT_SHIFT_SIZE 256 
+#define DEFAULT_SHIFT_SIZE 256
 
 /* Filter signals and args */
 enum {
@@ -80,39 +80,47 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS("ANY")
+    /*
+      "application/unknown, "
+      "format = (string) F64LE, "
+      "n_feature = (int) [" G_STRINGIFY(MIN_WINDOW_SIZE) ", " G_STRINGIFY(MAX_WINDOW_SIZE) "]")
+      */
     );
 
-#define gval_sftf_parent_class parent_class
-G_DEFINE_TYPE(GvalStft, gval_sftf, GST_TYPE_ELEMENT);
+#define gval_stft_parent_class parent_class
+G_DEFINE_TYPE(GvalStft, gval_stft, GST_TYPE_BASE_TRANSFORM);
 
-static void gval_sftf_dispose(GObject* object);
-static void gval_sftf_set_property(GObject* object, guint prop_id,
+static void gval_stft_dispose(GObject* object);
+static void gval_stft_set_property(GObject* object, guint prop_id,
     const GValue* value, GParamSpec* pspec);
-static void gval_sftf_get_property(GObject* object, guint prop_id,
+static void gval_stft_get_property(GObject* object, guint prop_id,
     GValue* value, GParamSpec* pspec);
 
-static gboolean gval_sftf_sink_event(GstPad* pad, GstObject* parent, GstEvent* event);
-static GstFlowReturn gval_sftf_chain(GstPad* pad, GstObject* parent, GstBuffer* buf);
+static gboolean gval_stft_sink_event(GstBaseTransform* trans,
+    GstEvent* event);
+static GstFlowReturn gval_stft_transform(GstBaseTransform* trans,
+    GstBuffer* inbuf, GstBuffer* outbuf);
 
 static gboolean print_field(GQuark field, const GValue* value, gpointer pfx);
 static void print_caps(const GstCaps* caps, const gchar* pfx);
 
-/* GObject vmethod implementations */
-
 /* initialize the stft's class */
-static void gval_sftf_class_init(GvalStftClass* klass) {
-  GObjectClass* gobject_class;
-  GstElementClass* gstelement_class;
+static void gval_stft_class_init(GvalStftClass* klass) {
+  GObjectClass* gobject_class = (GObjectClass*) klass;
+  GstElementClass* gstelement_class
+    = (GstElementClass*) klass;
+  GstBaseTransformClass* base_transform_class
+    = GST_BASE_TRANSFORM_CLASS (klass);
 
   gobject_class = (GObjectClass*) klass;
   gstelement_class = (GstElementClass*) klass;
 
-  gobject_class->set_property = gval_sftf_set_property;
-  gobject_class->get_property = gval_sftf_get_property;
-  gobject_class->dispose = gval_sftf_dispose;
+  gobject_class->set_property = gval_stft_set_property;
+  gobject_class->get_property = gval_stft_get_property;
+  gobject_class->dispose = gval_stft_dispose;
 
   stft_props[PROP_SILENT] = g_param_spec_boolean(
-      "silent", "Silent", "Produce verbose output ?", 
+      "silent", "Silent", "Produce verbose output ?",
       FALSE, G_PARAM_READWRITE);
   stft_props[PROP_WSIZE] = g_param_spec_uint(
       "wsize", "Window Size", "Window Size of the FFT",
@@ -136,6 +144,11 @@ static void gval_sftf_class_init(GvalStftClass* klass) {
       gst_static_pad_template_get(&src_factory));
   gst_element_class_add_pad_template(gstelement_class,
       gst_static_pad_template_get(&sink_factory));
+
+  base_transform_class->sink_event
+    = GST_DEBUG_FUNCPTR(gval_stft_sink_event);
+  base_transform_class->transform
+    = GST_DEBUG_FUNCPTR(gval_stft_transform);
 }
 
 /* initialize the new element
@@ -143,39 +156,27 @@ static void gval_sftf_class_init(GvalStftClass* klass) {
  * set pad calback functions
  * initialize instance structure
  */
-static void gval_sftf_init(GvalStft* self) {
-  self->sinkpad = gst_pad_new_from_static_template(&sink_factory, "sink");
-  gst_pad_set_event_function(self->sinkpad,
-      GST_DEBUG_FUNCPTR(gval_sftf_sink_event));
-  gst_pad_set_chain_function(self->sinkpad,
-      GST_DEBUG_FUNCPTR(gval_sftf_chain));
-  GST_PAD_SET_PROXY_CAPS(self->sinkpad);
-  gst_element_add_pad(GST_ELEMENT(self), self->sinkpad);
-
-  self->srcpad = gst_pad_new_from_static_template(&src_factory, "src");
-  GST_PAD_SET_PROXY_CAPS(self->srcpad);
-  gst_element_add_pad(GST_ELEMENT(self), self->srcpad);
-
+static void gval_stft_init(GvalStft* self) {
   self->silent = FALSE;
   self->wsize = 0;
   self->ssize = 0;
 
   self->start = 0;
   self->current = 0;
-  self->skip = 0; 
+  self->skip = 0;
   self->buffer = g_malloc_n(MAX_WINDOW_SIZE,
       sizeof(gdouble));
   self->window_func = gval_hann_window;
 }
 
-static void gval_sftf_dispose(GObject* object) {
+static void gval_stft_dispose(GObject* object) {
   GvalStft* self = GVAL_STFT(object);
   g_free(self->buffer);
 
-  G_OBJECT_CLASS(gval_sftf_parent_class)->dispose(object);
+  G_OBJECT_CLASS(gval_stft_parent_class)->dispose(object);
 }
 
-static void gval_sftf_set_property(GObject* object,
+static void gval_stft_set_property(GObject* object,
     guint prop_id, const GValue* value, GParamSpec* pspec) {
   GvalStft* self = GVAL_STFT(object);
 
@@ -197,7 +198,7 @@ static void gval_sftf_set_property(GObject* object,
   }
 }
 
-static void gval_sftf_get_property(GObject* object,
+static void gval_stft_get_property(GObject* object,
     guint prop_id, GValue* value, GParamSpec* pspec) {
   GvalStft* self = GVAL_STFT(object);
 
@@ -220,30 +221,29 @@ static void gval_sftf_get_property(GObject* object,
 /* GstElement vmethod implementations */
 
 /* this function handles sink events */
-static gboolean gval_sftf_sink_event(GstPad* pad,
-    GstObject* parent, GstEvent* event) {
-  GvalStft* self = GVAL_STFT(parent);
+static gboolean gval_stft_sink_event(GstBaseTransform* trans,
+    GstEvent* event) {
+  GvalStft* self = GVAL_STFT(trans);
 
   gboolean ret;
+  GstCaps* caps = NULL;
 
   switch (GST_EVENT_TYPE(event)) {
     case GST_EVENT_CAPS:
-      {
-        GstCaps* caps;
+      gst_event_parse_caps(event, &caps);
+      /* do something with the caps */
 
-        gst_event_parse_caps(event, &caps);
-        /* do something with the caps */
-
-        if (!self->silent) {
-          print_caps(caps, "");
-        }
-
-        /* and forward */
-        ret = gst_pad_event_default(pad, parent, event);
-        break;
+      if (!self->silent) {
+        print_caps(caps, "");
       }
+
+      /* and forward */
+      ret = GST_BASE_TRANSFORM_CLASS(gval_stft_parent_class)
+        ->sink_event(trans, event);
+      break;
     default:
-      ret = gst_pad_event_default(pad, parent, event);
+      ret = GST_BASE_TRANSFORM_CLASS(gval_stft_parent_class)
+        ->sink_event(trans, event);
       break;
   }
   return ret;
@@ -283,16 +283,16 @@ static void print_caps(const GstCaps* caps, const gchar* pfx) {
 /* chain function
  * this function does the actual processing
  */
-static GstFlowReturn gval_sftf_chain(GstPad* pad,
-    GstObject* parent, GstBuffer* buf) {
-  GvalStft* self = GVAL_STFT(parent);
+static GstFlowReturn gval_stft_transform(GstBaseTransform* trans,
+    GstBuffer* inbuf, GstBuffer* outbuf) {
+  GvalStft* self = GVAL_STFT(trans);
 
-  gsize size = gst_buffer_get_size(buf);
+  gsize size = gst_buffer_get_size(inbuf);
   gsize offset = 0;
   gsize copied = 0;
   guint empty = 0;
   gdouble* spectra;
-  guint i; 
+  guint i;
 
   while (size > 0) {
     if (self->skip > 0) {
@@ -309,18 +309,18 @@ static GstFlowReturn gval_sftf_chain(GstPad* pad,
         empty = self->start - self->current;
       }
 
-      copied = gst_buffer_extract(buf, offset, self->buffer + self->current, empty * sizeof(gdouble));
+      copied = gst_buffer_extract(inbuf, offset, self->buffer + self->current, empty * sizeof(gdouble));
       g_assert(copied > 0);
       size -= copied;
       offset += copied;
-      self->current = (self->current 
+      self->current = (self->current
           + copied / sizeof(gdouble)) % self->wsize;
 
       if (self->current == self->start) {
         // One full window
         spectra = g_malloc_n(self->wsize * 2, sizeof(gdouble));
         for (i = 0; i < self->wsize; i++) {
-          spectra[i * 2] = self->buffer[(self->start + i) 
+          spectra[i * 2] = self->buffer[(self->start + i)
             % self->wsize] * self->window_func(i, self->wsize);
           spectra[i * 2 + 1] = 0;
         }
@@ -329,7 +329,7 @@ static GstFlowReturn gval_sftf_chain(GstPad* pad,
         // Calculate Energy
         gdouble e = 0;
         for (i = 0; i < self->wsize; i++) {
-          e += sqrt(spectra[i * 2] * spectra[i * 2] 
+          e += sqrt(spectra[i * 2] * spectra[i * 2]
               + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
         }
 
@@ -353,26 +353,34 @@ static GstFlowReturn gval_sftf_chain(GstPad* pad,
 
   if (!self->silent) {
     /*
-    g_print("Have data of size %"G_GSIZE_FORMAT" bytes. "
-        "wsize=%"G_GUINT32_FORMAT", "
-        "ssize=%"G_GUINT32_FORMAT"\n",
-        gst_buffer_get_size(buf), self->wsize,
-        self->ssize);
-    gchar* padname = gst_pad_get_name(pad);
-    g_print("Pad Name: %s\n", padname);
-    g_free(padname);
+       g_print("Have data of size %"G_GSIZE_FORMAT" bytes. "
+       "wsize=%"G_GUINT32_FORMAT", "
+       "ssize=%"G_GUINT32_FORMAT"\n",
+       gst_buffer_get_size(buf), self->wsize,
+       self->ssize);
+       gchar* padname = gst_pad_get_name(pad);
+       g_print("Pad Name: %s\n", padname);
+       g_free(padname);
 
-    GstCaps* caps = gst_pad_get_current_caps(pad);
-    print_caps(caps, "");
-    gst_caps_unref(caps);
-    caps = gst_pad_get_allowed_caps(pad);
-    print_caps(caps, "");
-    gst_caps_unref(caps);
-    */
+       GstCaps* caps = gst_pad_get_current_caps(pad);
+       print_caps(caps, "");
+       gst_caps_unref(caps);
+       caps = gst_pad_get_allowed_caps(pad);
+       print_caps(caps, "");
+       gst_caps_unref(caps);
+     */
   }
 
   /* just push out the incoming buffer without touching it */
-  return gst_pad_push(self->srcpad, buf);
+  gboolean r = gst_buffer_copy_into(outbuf, inbuf,
+      GST_BUFFER_COPY_ALL, 0, -1);
+  if (r) {
+    return GST_FLOW_OK;
+  }
+  else {
+    g_error("Failed to copy buffer");
+    return GST_FLOW_ERROR;
+  }
 }
 
 /* entry point to initialize the plug-in
@@ -382,7 +390,7 @@ static GstFlowReturn gval_sftf_chain(GstPad* pad,
 static gboolean stft_init(GstPlugin* stft) {
   /* debug category for fltering log messages
    */
-  GST_DEBUG_CATEGORY_INIT(gval_sftf_debug, "stft",
+  GST_DEBUG_CATEGORY_INIT(gval_stft_debug, "stft",
       0, "Short Time Fourier Transform");
 
   return gst_element_register(stft, "stft", GST_RANK_NONE,
