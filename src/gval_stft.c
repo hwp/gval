@@ -186,11 +186,11 @@ static void gval_stft_set_property(GObject* object,
       break;
     case PROP_WSIZE:
       self->wsize = g_value_get_uint(value);
-      g_message("wsize <= %"G_GUINT32_FORMAT"\n", self->wsize);
+      g_message("wsize <= %"G_GUINT32_FORMAT, self->wsize);
       break;
     case PROP_SSIZE:
       self->ssize = g_value_get_uint(value);
-      g_message("ssize <= %"G_GUINT32_FORMAT"\n", self->ssize);
+      g_message("ssize <= %"G_GUINT32_FORMAT, self->ssize);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -372,8 +372,16 @@ static GstFlowReturn gval_stft_transform(GstBaseTransform* trans,
   }
 
   /* just push out the incoming buffer without touching it */
+  g_message("Before: inbuf.size=%lu, outbuf.size=%lu",
+      gst_buffer_get_size(inbuf),
+      gst_buffer_get_size(outbuf));
+  gst_buffer_remove_all_memory(outbuf);
   gboolean r = gst_buffer_copy_into(outbuf, inbuf,
-      GST_BUFFER_COPY_ALL, 0, -1);
+      GST_BUFFER_COPY_MEMORY | GST_BUFFER_COPY_TIMESTAMPS,
+      0, -1);
+  g_message("After: inbuf.size=%lu, outbuf.size=%lu",
+      gst_buffer_get_size(inbuf),
+      gst_buffer_get_size(outbuf));
   if (r) {
     return GST_FLOW_OK;
   }
@@ -405,6 +413,10 @@ static gboolean stft_init(GstPlugin* stft) {
 #ifndef PACKAGE
 #define PACKAGE "gval-package"
 #endif
+#ifndef GST_PACKAGE_ORIGIN
+#define GST_PACKAGE_ORIGIN "https://github.com/hwp/gval/"
+#endif
+
 
 /* gstreamer looks for this structure to register stfts
  */
@@ -417,5 +429,5 @@ GST_PLUGIN_DEFINE(
     VERSION,
     "GPL",
     "Unknown",
-    "https://github.com/hwp/gval/"
+    GST_PACKAGE_ORIGIN 
     );
