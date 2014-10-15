@@ -143,50 +143,50 @@ static void gval_sftf_class_init(GvalStftClass* klass) {
  * set pad calback functions
  * initialize instance structure
  */
-static void gval_sftf_init(GvalStft* self) {
-  self->sinkpad = gst_pad_new_from_static_template(&sink_factory, "sink");
-  gst_pad_set_event_function(self->sinkpad,
+static void gval_sftf_init(GvalStft* this) {
+  this->sinkpad = gst_pad_new_from_static_template(&sink_factory, "sink");
+  gst_pad_set_event_function(this->sinkpad,
       GST_DEBUG_FUNCPTR(gval_sftf_sink_event));
-  gst_pad_set_chain_function(self->sinkpad,
+  gst_pad_set_chain_function(this->sinkpad,
       GST_DEBUG_FUNCPTR(gval_sftf_chain));
-  GST_PAD_SET_PROXY_CAPS(self->sinkpad);
-  gst_element_add_pad(GST_ELEMENT(self), self->sinkpad);
+  GST_PAD_SET_PROXY_CAPS(this->sinkpad);
+  gst_element_add_pad(GST_ELEMENT(this), this->sinkpad);
 
-  self->srcpad = gst_pad_new_from_static_template(&src_factory, "src");
-  GST_PAD_SET_PROXY_CAPS(self->srcpad);
-  gst_element_add_pad(GST_ELEMENT(self), self->srcpad);
+  this->srcpad = gst_pad_new_from_static_template(&src_factory, "src");
+  GST_PAD_SET_PROXY_CAPS(this->srcpad);
+  gst_element_add_pad(GST_ELEMENT(this), this->srcpad);
 
-  self->silent = FALSE;
-  self->wsize = 0;
-  self->ssize = 0;
+  this->silent = FALSE;
+  this->wsize = 0;
+  this->ssize = 0;
 
-  self->adapter = gst_adapter_new();
-  self->skip = 0; 
-  self->window_func = gval_hann_window;
+  this->adapter = gst_adapter_new();
+  this->skip = 0; 
+  this->window_func = gval_hann_window;
 }
 
 static void gval_sftf_dispose(GObject* object) {
-  GvalStft* self = GVAL_STFT(object);
-  g_object_unref(self->adapter);
+  GvalStft* this = GVAL_STFT(object);
+  g_object_unref(this->adapter);
 
   G_OBJECT_CLASS(gval_sftf_parent_class)->dispose(object);
 }
 
 static void gval_sftf_set_property(GObject* object,
     guint prop_id, const GValue* value, GParamSpec* pspec) {
-  GvalStft* self = GVAL_STFT(object);
+  GvalStft* this = GVAL_STFT(object);
 
   switch (prop_id) {
     case PROP_SILENT:
-      self->silent = g_value_get_boolean(value);
+      this->silent = g_value_get_boolean(value);
       break;
     case PROP_WSIZE:
-      self->wsize = g_value_get_uint(value);
-      g_message("wsize <= %"G_GUINT32_FORMAT, self->wsize);
+      this->wsize = g_value_get_uint(value);
+      g_message("wsize <= %"G_GUINT32_FORMAT, this->wsize);
       break;
     case PROP_SSIZE:
-      self->ssize = g_value_get_uint(value);
-      g_message("ssize <= %"G_GUINT32_FORMAT, self->ssize);
+      this->ssize = g_value_get_uint(value);
+      g_message("ssize <= %"G_GUINT32_FORMAT, this->ssize);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -196,17 +196,17 @@ static void gval_sftf_set_property(GObject* object,
 
 static void gval_sftf_get_property(GObject* object,
     guint prop_id, GValue* value, GParamSpec* pspec) {
-  GvalStft* self = GVAL_STFT(object);
+  GvalStft* this = GVAL_STFT(object);
 
   switch (prop_id) {
     case PROP_SILENT:
-      g_value_set_boolean(value, self->silent);
+      g_value_set_boolean(value, this->silent);
       break;
     case PROP_WSIZE:
-      g_value_set_uint(value, self->wsize);
+      g_value_set_uint(value, this->wsize);
       break;
     case PROP_SSIZE:
-      g_value_set_uint(value, self->ssize);
+      g_value_set_uint(value, this->ssize);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -219,7 +219,7 @@ static void gval_sftf_get_property(GObject* object,
 /* this function handles sink events */
 static gboolean gval_sftf_sink_event(GstPad* pad,
     GstObject* parent, GstEvent* event) {
-  GvalStft* self = GVAL_STFT(parent);
+  GvalStft* this = GVAL_STFT(parent);
 
   gboolean ret;
 
@@ -231,7 +231,7 @@ static gboolean gval_sftf_sink_event(GstPad* pad,
         gst_event_parse_caps(event, &caps);
         /* do something with the caps */
 
-        if (!self->silent) {
+        if (!this->silent) {
           print_caps(caps, "");
         }
 
@@ -282,45 +282,45 @@ static void print_caps(const GstCaps* caps, const gchar* pfx) {
  */
 static GstFlowReturn gval_sftf_chain(GstPad* pad,
     GstObject* parent, GstBuffer* buf) {
-  GvalStft* self = GVAL_STFT(parent);
+  GvalStft* this = GVAL_STFT(parent);
 
-  gst_adapter_push(self->adapter, buf);
+  gst_adapter_push(this->adapter, buf);
   gst_buffer_ref(buf);
   g_message("pushed");
 
-  gsize skipped = gst_adapter_available(self->adapter);
-  if (self->skip > 0) {
-    skipped = MIN(self->skip, skipped);
-    gst_adapter_flush(self->adapter, skipped);
-    self->skip -= skipped;
+  gsize skipped = gst_adapter_available(this->adapter);
+  if (this->skip > 0) {
+    skipped = MIN(this->skip, skipped);
+    gst_adapter_flush(this->adapter, skipped);
+    this->skip -= skipped;
   }
 
   guint i; 
-  gsize avail = gst_adapter_available(self->adapter);
-  while (avail >= self->wsize * sizeof(gdouble)) {
+  gsize avail = gst_adapter_available(this->adapter);
+  while (avail >= this->wsize * sizeof(gdouble)) {
     // One full window
-    const gdouble* data = gst_adapter_map(self->adapter,
-        self->wsize * sizeof(gdouble));
-    gdouble * spectra = g_malloc_n(self->wsize * 2,
+    const gdouble* data = gst_adapter_map(this->adapter,
+        this->wsize * sizeof(gdouble));
+    gdouble * spectra = g_malloc_n(this->wsize * 2,
         sizeof(gdouble));
-    for (i = 0; i < self->wsize; i++) {
+    for (i = 0; i < this->wsize; i++) {
       spectra[i * 2] = data[i] 
-        * self->window_func(i, self->wsize);
+        * this->window_func(i, this->wsize);
       spectra[i * 2 + 1] = 0;
     }
-    gsl_fft_complex_radix2_forward(spectra, 1, self->wsize);
-    gst_adapter_unmap(self->adapter);
+    gsl_fft_complex_radix2_forward(spectra, 1, this->wsize);
+    gst_adapter_unmap(this->adapter);
 
     // Shift
-    skipped = MIN(self->ssize * sizeof(gdouble), avail);
-    gst_adapter_flush(self->adapter, skipped);
+    skipped = MIN(this->ssize * sizeof(gdouble), avail);
+    gst_adapter_flush(this->adapter, skipped);
     avail -= skipped;
-    self->skip = self->ssize * sizeof(gdouble) - skipped;
+    this->skip = this->ssize * sizeof(gdouble) - skipped;
 
     // Calculate Energy
-    if (!self->silent) {
+    if (!this->silent) {
       gdouble e = 0;
-      for (i = 0; i < self->wsize; i++) {
+      for (i = 0; i < this->wsize; i++) {
         e += sqrt(spectra[i * 2] * spectra[i * 2] 
             + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
       }
@@ -332,7 +332,7 @@ static GstFlowReturn gval_sftf_chain(GstPad* pad,
   }
 
   /* just push out the incoming buffer without touching it */
-  return gst_pad_push(self->srcpad, buf);
+  return gst_pad_push(this->srcpad, buf);
 }
 
 /* entry point to initialize the plug-in
