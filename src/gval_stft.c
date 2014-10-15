@@ -160,17 +160,14 @@ static void gval_sftf_init(GvalStft* self) {
   self->wsize = 0;
   self->ssize = 0;
 
-  self->start = 0;
-  self->current = 0;
+  self->adapter = gst_adapter_new();
   self->skip = 0; 
-  self->buffer = g_malloc_n(MAX_WINDOW_SIZE,
-      sizeof(gdouble));
   self->window_func = gval_hann_window;
 }
 
 static void gval_sftf_dispose(GObject* object) {
   GvalStft* self = GVAL_STFT(object);
-  g_free(self->buffer);
+  g_object_unref(self->adapter);
 
   G_OBJECT_CLASS(gval_sftf_parent_class)->dispose(object);
 }
@@ -185,11 +182,11 @@ static void gval_sftf_set_property(GObject* object,
       break;
     case PROP_WSIZE:
       self->wsize = g_value_get_uint(value);
-      g_message("wsize <= %"G_GUINT32_FORMAT"\n", self->wsize);
+      g_message("wsize <= %"G_GUINT32_FORMAT, self->wsize);
       break;
     case PROP_SSIZE:
       self->ssize = g_value_get_uint(value);
-      g_message("ssize <= %"G_GUINT32_FORMAT"\n", self->ssize);
+      g_message("ssize <= %"G_GUINT32_FORMAT, self->ssize);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -287,88 +284,51 @@ static GstFlowReturn gval_sftf_chain(GstPad* pad,
     GstObject* parent, GstBuffer* buf) {
   GvalStft* self = GVAL_STFT(parent);
 
-  gsize size = gst_buffer_get_size(buf);
-  gsize offset = 0;
-  gsize copied = 0;
-  guint empty = 0;
-  gdouble* spectra;
-  guint i; 
+  gst_adapter_push(self->adapter, buf);
+  gst_buffer_ref(buf);
+  g_message("pushed");
 
-  while (size > 0) {
-    if (self->skip > 0) {
-      copied = MIN(size, self->skip);
-      size -= copied;
-      self->skip -= copied;
-      offset += copied;
-    }
-    else {
-      if (self->current >= self->start) {
-        empty = self->wsize - self->current;
-      }
-      else {
-        empty = self->start - self->current;
-      }
-
-      copied = gst_buffer_extract(buf, offset, self->buffer + self->current, empty * sizeof(gdouble));
-      g_assert(copied > 0);
-      size -= copied;
-      offset += copied;
-      self->current = (self->current 
-          + copied / sizeof(gdouble)) % self->wsize;
-
-      if (self->current == self->start) {
-        // One full window
-        spectra = g_malloc_n(self->wsize * 2, sizeof(gdouble));
-        for (i = 0; i < self->wsize; i++) {
-          spectra[i * 2] = self->buffer[(self->start + i) 
-            % self->wsize] * self->window_func(i, self->wsize);
-          spectra[i * 2 + 1] = 0;
-        }
-        gsl_fft_complex_radix2_forward(spectra, 1, self->wsize);
-
-        // Calculate Energy
-        gdouble e = 0;
-        for (i = 0; i < self->wsize; i++) {
-          e += sqrt(spectra[i * 2] * spectra[i * 2] 
-              + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
-        }
-
-        if (!self->silent) {
-          g_print("E = %g\n", e);
-        }
-
-        g_free(spectra);
-        // Shift
-        if (self->ssize <= self->wsize) {
-          self->start = (self->start + self->ssize)
-            % self->wsize;
-        }
-        else {
-          self->skip = (self->ssize - self->wsize)
-            * sizeof(gdouble);
-        }
-      }
-    }
+  gsize skipped = gst_adapter_available(self->adapter);
+  if (self->skip > 0) {
+    skipped = MIN(self->skip, skipped);
+    gst_adapter_flush(self->adapter, skipped);
+    self->skip -= skipped;
   }
 
-  if (!self->silent) {
-    /*
-    g_print("Have data of size %"G_GSIZE_FORMAT" bytes. "
-        "wsize=%"G_GUINT32_FORMAT", "
-        "ssize=%"G_GUINT32_FORMAT"\n",
-        gst_buffer_get_size(buf), self->wsize,
-        self->ssize);
-    gchar* padname = gst_pad_get_name(pad);
-    g_print("Pad Name: %s\n", padname);
-    g_free(padname);
+  guint i; 
+  gsize avail = gst_adapter_available(self->adapter);
+  while (avail >= self->wsize * sizeof(gdouble)) {
+    // One full window
+    const gdouble* data = gst_adapter_map(self->adapter,
+        self->wsize * sizeof(gdouble));
+    gdouble * spectra = g_malloc_n(self->wsize * 2,
+        sizeof(gdouble));
+    for (i = 0; i < self->wsize; i++) {
+      spectra[i * 2] = data[i] 
+        * self->window_func(i, self->wsize);
+      spectra[i * 2 + 1] = 0;
+    }
+    gsl_fft_complex_radix2_forward(spectra, 1, self->wsize);
+    gst_adapter_unmap(self->adapter);
 
-    GstCaps* caps = gst_pad_get_current_caps(pad);
-    print_caps(caps, "");
-    gst_caps_unref(caps);
-    caps = gst_pad_get_allowed_caps(pad);
-    print_caps(caps, "");
-    gst_caps_unref(caps);
-    */
+    // Shift
+    skipped = MIN(self->ssize * sizeof(gdouble), avail);
+    gst_adapter_flush(self->adapter, skipped);
+    avail -= skipped;
+    self->skip = self->ssize * sizeof(gdouble) - skipped;
+
+    // Calculate Energy
+    if (!self->silent) {
+      gdouble e = 0;
+      for (i = 0; i < self->wsize; i++) {
+        e += sqrt(spectra[i * 2] * spectra[i * 2] 
+            + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
+      }
+
+      g_print("E = %g\n", e);
+    }
+
+    g_free(spectra);
   }
 
   /* just push out the incoming buffer without touching it */

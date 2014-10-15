@@ -25,6 +25,7 @@
 #define GVAL_STFT_H_
 
 #include <gst/gst.h>
+#include <gst/base/gstadapter.h>
 
 G_BEGIN_DECLS
 
@@ -50,10 +51,8 @@ typedef struct {
   guint wsize;
   guint ssize;
 
-  guint start;
-  guint current;
+  GstAdapter* adapter;
   gsize skip;
-  gdouble* buffer;
   gdouble (*window_func)(guint index, guint wsize);
 } GvalStft;
 
