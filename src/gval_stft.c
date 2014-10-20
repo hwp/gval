@@ -55,6 +55,7 @@ enum {
   PROP_SILENT,
   PROP_WSIZE,
   PROP_SSIZE,
+  PROP_LOCATION,
 
   N_PROPERTIES
 };
@@ -80,11 +81,6 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS("ANY")
-    /*
-      "application/unknown, "
-      "format = (string) F64LE, "
-      "n_feature = (int) [" G_STRINGIFY(MIN_WINDOW_SIZE) ", " G_STRINGIFY(MAX_WINDOW_SIZE) "]")
-      */
     );
 
 #define gval_stft_parent_class parent_class
@@ -130,6 +126,9 @@ static void gval_stft_class_init(GvalStftClass* klass) {
       "ssize", "Shift Size", "Shift Size of the FFT",
       MIN_SHIFT_SIZE, MAX_SHIFT_SIZE, DEFAULT_SHIFT_SIZE,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  stft_props[PROP_LOCATION] = g_param_spec_string(
+      "location", "Location", "Path to the output file",
+      NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties(gobject_class,
       N_PROPERTIES, stft_props);
@@ -160,15 +159,20 @@ static void gval_stft_init(GvalStft* this) {
   this->silent = FALSE;
   this->wsize = 0;
   this->ssize = 0;
+  this->location = NULL;
 
   this->adapter = gst_adapter_new();
-  this->skip = 0; 
+  this->skip = 0;
   this->window_func = gval_hann_window;
+  this->out = NULL;
 }
 
 static void gval_stft_dispose(GObject* object) {
   GvalStft* this = GVAL_STFT(object);
   g_object_unref(this->adapter);
+  if (this->out) {
+    fclose(this->out);
+  }
 
   G_OBJECT_CLASS(gval_stft_parent_class)->dispose(object);
 }
@@ -183,11 +187,12 @@ static void gval_stft_set_property(GObject* object,
       break;
     case PROP_WSIZE:
       this->wsize = g_value_get_uint(value);
-      g_message("wsize <= %"G_GUINT32_FORMAT, this->wsize);
       break;
     case PROP_SSIZE:
       this->ssize = g_value_get_uint(value);
-      g_message("ssize <= %"G_GUINT32_FORMAT, this->ssize);
+      break;
+    case PROP_LOCATION:
+      this->location = g_value_dup_string(value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -208,6 +213,9 @@ static void gval_stft_get_property(GObject* object,
       break;
     case PROP_SSIZE:
       g_value_set_uint(value, this->ssize);
+      break;
+    case PROP_LOCATION:
+      g_value_set_string(value, this->location);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -293,16 +301,16 @@ static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
     this->skip -= skipped;
   }
 
-  guint i; 
+  guint i;
   gsize avail = gst_adapter_available(this->adapter);
   while (avail >= this->wsize * sizeof(gdouble)) {
     // One full window
     const gdouble* data = gst_adapter_map(this->adapter,
         this->wsize * sizeof(gdouble));
-    gdouble * spectra = g_malloc_n(this->wsize * 2,
+    gdouble* spectra = g_malloc_n(this->wsize * 2,
         sizeof(gdouble));
     for (i = 0; i < this->wsize; i++) {
-      spectra[i * 2] = data[i] 
+      spectra[i * 2] = data[i]
         * this->window_func(i, this->wsize);
       spectra[i * 2 + 1] = 0;
     }
@@ -315,14 +323,20 @@ static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
     avail -= skipped;
     this->skip = this->ssize * sizeof(gdouble) - skipped;
 
-    // Calculate Energy
-    if (!this->silent) {
-      gdouble e = 0;
-      for (i = 0; i < this->wsize; i++) {
-        e += sqrt(spectra[i * 2] * spectra[i * 2] 
-            + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
+    // Calculate spectrum
+    for (i = 0; i < this->wsize / 2 + 1; i++) {
+      spectra[i] = sqrt(spectra[i * 2] * spectra[i * 2]
+          + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
+    }
+
+    // Write to file
+    if (this->location) {
+      if (!this->out) {
+        this->out = fopen(this->location, "w");
       }
-      g_print("E = %g\n", e);
+      g_assert(this->out);
+      fwrite(spectra, sizeof(double), this->wsize / 2 + 1,
+          this->out);
     }
 
     g_free(spectra);
@@ -369,5 +383,5 @@ GST_PLUGIN_DEFINE(
     VERSION,
     "GPL",
     "Unknown",
-    GST_PACKAGE_ORIGIN 
+    GST_PACKAGE_ORIGIN
     );
