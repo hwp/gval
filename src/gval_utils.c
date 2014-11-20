@@ -23,8 +23,10 @@
 
 #include "gval_utils.h"
 
+#include <assert.h>
+#include <string.h>
 #include <math.h>
-#include <gsl/gsl_fft_complex.h>
+#include <fftw3.h>
 
 gdouble gval_hann_window(guint index, guint wsize) {
   return 0.5 * (1 - cos(2 * M_PI * index / (wsize - 1)));
@@ -32,20 +34,26 @@ gdouble gval_hann_window(guint index, guint wsize) {
 
 void gval_spectrum(gdouble* result, const gdouble* signal,
     guint size, window_func_t window) {
+  assert(sizeof(gdouble) == sizeof(double));
+
   guint i;
-  gdouble* spectra = g_malloc_n(size * 2, sizeof(gdouble));
-  for (i = 0; i < size; i++) {
-    spectra[i * 2] = signal[i] * window(i, size);
-    spectra[i * 2 + 1] = 0;
-  }
-  gsl_fft_complex_radix2_forward(spectra, 1, size);
+  double* tsig = fftw_alloc_real(size);
+  fftw_complex* dft = fftw_alloc_complex(size / 2 + 1);
+
+  fftw_plan plan = fftw_plan_dft_r2c_1d(size, tsig, dft,
+      FFTW_ESTIMATE);
+
+  memcpy(tsig, signal, sizeof(double) * size);
+  fftw_execute(plan);
+
+  fftw_destroy_plan(plan);
+  fftw_free(tsig);
+  fftw_free(dft);
 
   // Calculate spectrum
   for (i = 0; i < size / 2 + 1; i++) {
-    result[i] = sqrt(spectra[i * 2] * spectra[i * 2]
-        + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
+    result[i] = sqrt(dft[i][0] * dft[i][0] 
+        + dft[i][1] * dft[i][1]);
   }
-
-  g_free(spectra);
 }
 

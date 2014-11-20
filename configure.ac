@@ -58,7 +58,7 @@ PKG_CHECK_MODULES(GST, [
   ])
 ])
 
-PKG_CHECK_MODULES(GSL, gsl >= 1.0)
+PKG_CHECK_MODULES(FFTW, fftw3 >= 3.0)
 
 dnl check if compiler understands -Wall (if yes, add -Wall to GST_CFLAGS)
 AC_MSG_CHECKING([to see if compiler understands -Wall])
