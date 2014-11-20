@@ -30,7 +30,6 @@
 
 #include <math.h>
 #include <gst/gst.h>
-#include <gsl/gsl_fft_complex.h>
 
 GST_DEBUG_CATEGORY_STATIC(gval_stft_debug);
 #define GST_CAT_DEFAULT gval_stft_debug
@@ -301,33 +300,16 @@ static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
     this->skip -= skipped;
   }
 
-  guint i;
   gsize avail = gst_adapter_available(this->adapter);
   while (avail >= this->wsize * sizeof(gdouble)) {
     // One full window
     const gdouble* data = gst_adapter_map(this->adapter,
         this->wsize * sizeof(gdouble));
-    gdouble* spectra = g_malloc_n(this->wsize * 2,
+    gdouble* spectra = g_malloc_n(this->wsize / 2 + 1,
         sizeof(gdouble));
-    for (i = 0; i < this->wsize; i++) {
-      spectra[i * 2] = data[i]
-        * this->window_func(i, this->wsize);
-      spectra[i * 2 + 1] = 0;
-    }
-    gsl_fft_complex_radix2_forward(spectra, 1, this->wsize);
+    gval_spectrum(spectra, data, this->wsize,
+        this->window_func);
     gst_adapter_unmap(this->adapter);
-
-    // Shift
-    skipped = MIN(this->ssize * sizeof(gdouble), avail);
-    gst_adapter_flush(this->adapter, skipped);
-    avail -= skipped;
-    this->skip = this->ssize * sizeof(gdouble) - skipped;
-
-    // Calculate spectrum
-    for (i = 0; i < this->wsize / 2 + 1; i++) {
-      spectra[i] = sqrt(spectra[i * 2] * spectra[i * 2]
-          + spectra[i * 2 + 1] * spectra[i * 2 + 1]);
-    }
 
     // Write to file
     if (this->location) {
@@ -340,6 +322,12 @@ static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
     }
 
     g_free(spectra);
+
+    // Shift
+    skipped = MIN(this->ssize * sizeof(gdouble), avail);
+    gst_adapter_flush(this->adapter, skipped);
+    avail -= skipped;
+    this->skip = this->ssize * sizeof(gdouble) - skipped;
   }
 
   return GST_FLOW_OK;

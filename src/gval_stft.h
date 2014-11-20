@@ -24,6 +24,8 @@
 #ifndef GVAL_STFT_H_
 #define GVAL_STFT_H_
 
+#include "gval_utils.h"
+
 #include <gst/base/gstadapter.h>
 #include <gst/base/gstbasetransform.h>
 
@@ -53,7 +55,7 @@ typedef struct {
 
   GstAdapter* adapter;
   gsize skip;
-  gdouble (*window_func)(guint index, guint wsize);
+  window_func_t window_func;
   FILE* out;
 } GvalStft;
 

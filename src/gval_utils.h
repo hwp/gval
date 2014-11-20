@@ -26,7 +26,12 @@
 
 #include <glib.h>
 
+typedef gdouble (*window_func_t)(guint index, guint wsize);
+
 gdouble gval_hann_window(guint index, guint wsize);
+
+void gval_spectrum(gdouble* result, const gdouble* signal,
+    guint size, window_func_t window);
 
 #endif  // GVAL_UTILS_H_
 
