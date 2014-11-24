@@ -43,7 +43,9 @@ void gval_spectrum(gdouble* result, const gdouble* signal,
   fftw_plan plan = fftw_plan_dft_r2c_1d(size, tsig, dft,
       FFTW_ESTIMATE);
 
-  memcpy(tsig, signal, sizeof(double) * size);
+  for (i = 0; i < size; i++) {
+    tsig[i] = signal[i] * window(i, size);
+  }
   fftw_execute(plan);
 
   fftw_destroy_plan(plan);
