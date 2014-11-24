@@ -49,15 +49,15 @@ void gval_spectrum(double* result, const double* signal,
   }
   fftw_execute(plan);
 
-  fftw_destroy_plan(plan);
-  fftw_free(tsig);
-  fftw_free(dft);
-
   // Calculate spectrum
   for (i = 0; i < size / 2 + 1; i++) {
     result[i] = sqrt(dft[i][0] * dft[i][0]
         + dft[i][1] * dft[i][1]) / (double) size;
   }
+
+  fftw_destroy_plan(plan);
+  fftw_free(tsig);
+  fftw_free(dft);
 }
 
 void gval_mfcc(double* result, const double* signal,
@@ -104,13 +104,12 @@ void gval_mfcc(double* result, const double* signal,
   // calculate dct
   fftw_execute(plan);
 
-  fftw_destroy_plan(plan);
-
   // copy result
   for (i = 0; i < n_channels; i++) {
     result[i] = buf[i];
   }
 
+  fftw_destroy_plan(plan);
   fftw_free(buf);
 }
 
