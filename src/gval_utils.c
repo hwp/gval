@@ -29,6 +29,9 @@
 
 #include <fftw3.h>
 
+#define MEL_SCALE_PORTION(f, p) \
+  (700.0 * (pow(1.0 + (f) / 700.0, (p)) - 1.0))
+
 double gval_hann_window(unsigned int index, unsigned int wsize) {
   return 0.5 * (1 - cos(2 * M_PI * index / (wsize - 1)));
 }
@@ -77,26 +80,35 @@ void gval_mfcc(double* result, const double* signal,
   double f_max = spl_rate / 2.0;
   double f_unit = (double) spl_rate / size;
   double f_begin = 0.0;
-  double f_mid = 700.0 * (pow(1.0 + f_max / 700.0,
-        1.0 / (n_channels + 1.0)) - 1.0);
-  double f_end = 700.0 * (pow(1.0 + f_max / 700.0,
-        2.0 / (n_channels + 1.0)) - 1.0);
+  double f_mid = MEL_SCALE_PORTION(f_max,
+      1.0 / (n_channels + 1.0));
+  double f_end = MEL_SCALE_PORTION(f_max,
+      2.0 / (n_channels + 1.0));
   for (i = 0; i < n_channels; i++) {
     double sum = 0.0;
+    //printf("%g, %g, %g\n", f_begin, f_mid, f_end);
     for (j = (unsigned int) ceil(f_begin / f_unit);
-        j< (unsigned int) floor(f_mid / f_unit); j++) {
+        j <= (unsigned int) floor(f_mid / f_unit); j++) {
       assert(j >= 0 && j < size / 2 + 1);
-      sum += spec[j] * (j * f_unit - f_begin)
-        / (f_mid - f_begin);
+      double w = (j * f_unit - f_begin) / (f_mid - f_begin);
+      //printf("%d, %g, %g\n", j, j * f_unit, w);
+      sum += spec[j] * w;
     }
-    for ( ; j< (unsigned int) floor(f_end / f_unit); j++) {
+    for ( ; j <= (unsigned int) floor(f_end / f_unit); j++) {
       assert(j >= 0 && j < size / 2 + 1);
-      sum += spec[j] * (f_end - j * f_unit)
-        / (f_end - f_mid);
+      double w = (f_end - j * f_unit) / (f_end - f_mid);
+      //printf("%d, %g, %g\n", j, j * f_unit, w);
+      sum += spec[j] * w;
     }
 
     // log of filter bank
     buf[i] = log(sum);
+
+    // Calculate new points
+    f_begin = f_mid;
+    f_mid = f_end;
+    f_end = MEL_SCALE_PORTION(f_max,
+      (i + 3.0) / (n_channels + 1.0));
   }
 
   free(spec);

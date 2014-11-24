@@ -32,8 +32,8 @@ void gval_spectrum(double* result, const double* signal,
     unsigned int size, window_func_t window);
 
 void gval_mfcc(double* result, const double* signal,
-    unsigned int size, unsigned int n_channels, unsigned int spl_rate,
-    window_func_t window);
+    unsigned int size, unsigned int n_channels,
+    unsigned int spl_rate, window_func_t window);
 
 #endif  // GVAL_UTILS_H_
 
