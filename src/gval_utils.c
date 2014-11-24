@@ -23,20 +23,21 @@
 
 #include "gval_utils.h"
 
-#include <assert.h>
-#include <string.h>
+#include <stdlib.h>
 #include <math.h>
+#include <assert.h>
+
 #include <fftw3.h>
 
-gdouble gval_hann_window(guint index, guint wsize) {
+double gval_hann_window(unsigned int index, unsigned int wsize) {
   return 0.5 * (1 - cos(2 * M_PI * index / (wsize - 1)));
 }
 
-void gval_spectrum(gdouble* result, const gdouble* signal,
-    guint size, window_func_t window) {
-  assert(sizeof(gdouble) == sizeof(double));
+void gval_spectrum(double* result, const double* signal,
+    unsigned int size, window_func_t window) {
+  assert(sizeof(double) == sizeof(double));
 
-  guint i;
+  unsigned int i;
   double* tsig = fftw_alloc_real(size);
   fftw_complex* dft = fftw_alloc_complex(size / 2 + 1);
 
@@ -59,14 +60,13 @@ void gval_spectrum(gdouble* result, const gdouble* signal,
   }
 }
 
-void gval_mfcc(gdouble* result, const gdouble* signal,
-    guint size, guint n_channels, guint spl_rate,
+void gval_mfcc(double* result, const double* signal,
+    unsigned int size, unsigned int n_channels, unsigned int spl_rate,
     window_func_t window) {
-  guint i, j;
+  unsigned int i, j;
 
   // Power spectrum
-  gdouble* spec = g_malloc_n(size / 2 + 1,
-      sizeof(gdouble));
+  double* spec = malloc((size / 2 + 1) * sizeof(double));
   gval_spectrum(spec, signal, size, window);
 
   // Plan for dct
@@ -83,13 +83,13 @@ void gval_mfcc(gdouble* result, const gdouble* signal,
         2.0 / (n_channels + 1.0)) - 1.0);
   for (i = 0; i < n_channels; i++) {
     double sum = 0.0;
-    for (j = (guint) ceil(f_begin / f_unit);
-        j< (guint) floor(f_mid / f_unit); j++) {
+    for (j = (unsigned int) ceil(f_begin / f_unit);
+        j< (unsigned int) floor(f_mid / f_unit); j++) {
       assert(j >= 0 && j < size / 2 + 1);
       sum += spec[j] * (j * f_unit - f_begin)
         / (f_mid - f_begin);
     }
-    for ( ; j< (guint) floor(f_end / f_unit); j++) {
+    for ( ; j< (unsigned int) floor(f_end / f_unit); j++) {
       assert(j >= 0 && j < size / 2 + 1);
       sum += spec[j] * (f_end - j * f_unit)
         / (f_end - f_mid);
@@ -99,7 +99,7 @@ void gval_mfcc(gdouble* result, const gdouble* signal,
     buf[i] = log(sum);
   }
 
-  g_free(spec);
+  free(spec);
 
   // calculate dct
   fftw_execute(plan);

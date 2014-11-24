@@ -24,17 +24,15 @@
 #ifndef GVAL_UTILS_H_
 #define GVAL_UTILS_H_
 
-#include <glib.h>
+typedef double (*window_func_t)(unsigned int index, unsigned int wsize);
 
-typedef gdouble (*window_func_t)(guint index, guint wsize);
+double gval_hann_window(unsigned int index, unsigned int wsize);
 
-gdouble gval_hann_window(guint index, guint wsize);
+void gval_spectrum(double* result, const double* signal,
+    unsigned int size, window_func_t window);
 
-void gval_spectrum(gdouble* result, const gdouble* signal,
-    guint size, window_func_t window);
-
-void gval_mfcc(gdouble* result, const gdouble* signal,
-    guint size, guint n_channels, guint spl_rate,
+void gval_mfcc(double* result, const double* signal,
+    unsigned int size, unsigned int n_channels, unsigned int spl_rate,
     window_func_t window);
 
 #endif  // GVAL_UTILS_H_
