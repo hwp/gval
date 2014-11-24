@@ -55,7 +55,13 @@ void gval_spectrum(gdouble* result, const gdouble* signal,
   // Calculate spectrum
   for (i = 0; i < size / 2 + 1; i++) {
     result[i] = sqrt(dft[i][0] * dft[i][0] 
-        + dft[i][1] * dft[i][1]);
+        + dft[i][1] * dft[i][1]) / (double) size;
   }
+}
+
+void gval_mfcc(gdouble* result, const gdouble* signal,
+    guint size, guint n_channels, guint spl_rate,
+    window_func_t window) {
+  
 }
 

@@ -33,5 +33,9 @@ gdouble gval_hann_window(guint index, guint wsize);
 void gval_spectrum(gdouble* result, const gdouble* signal,
     guint size, window_func_t window);
 
+void gval_mfcc(gdouble* result, const gdouble* signal,
+    guint size, guint n_channels, guint spl_rate,
+    window_func_t window);
+
 #endif  // GVAL_UTILS_H_
 
