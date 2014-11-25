@@ -52,6 +52,8 @@ typedef struct {
   guint wsize;
   guint ssize;
   guint n_channels;
+  guint cbegin;
+  guint csize;
   const gchar* location;
 
   GstAdapter* adapter;

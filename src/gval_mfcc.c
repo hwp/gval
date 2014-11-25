@@ -46,6 +46,14 @@ GST_DEBUG_CATEGORY_STATIC(gval_mfcc_debug);
 #define MAX_N_CHANNELS 128
 #define DEFAULT_N_CHANNELS 16
 
+#define MIN_COEF_BEGIN 0
+#define MAX_COEF_BEGIN MAX_N_CHANNELS
+#define DEFAULT_COEF_BEGIN 0
+
+#define MIN_COEF_SIZE 1
+#define MAX_COEF_SIZE MAX_N_CHANNELS
+#define DEFAULT_COEF_SIZE DEFAULT_N_CHANNELS
+
 /* Filter signals and args */
 enum {
   /* FILL ME */
@@ -59,6 +67,8 @@ enum {
   PROP_WSIZE,
   PROP_SSIZE,
   PROP_N_CHANNELS,
+  PROP_COEF_BEGIN,
+  PROP_COEF_SIZE,
   PROP_LOCATION,
 
   N_PROPERTIES
@@ -131,6 +141,14 @@ static void gval_mfcc_class_init(GvalMfccClass* klass) {
       "banks", "Banks", "Number of filter banks",
       MIN_N_CHANNELS, MAX_N_CHANNELS, DEFAULT_N_CHANNELS,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  mfcc_props[PROP_COEF_BEGIN] = g_param_spec_uint(
+      "cbegin", "Coefficients Begin", "Begin index of coefficients",
+      MIN_COEF_BEGIN, MAX_COEF_BEGIN, DEFAULT_COEF_BEGIN,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  mfcc_props[PROP_COEF_SIZE] = g_param_spec_uint(
+      "csize", "Coefficients Size", "Number of coefficients",
+      MIN_COEF_SIZE, MAX_COEF_SIZE, DEFAULT_COEF_SIZE,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
   mfcc_props[PROP_LOCATION] = g_param_spec_string(
       "location", "Location", "Path to the output file",
       NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
@@ -164,6 +182,9 @@ static void gval_mfcc_init(GvalMfcc* this) {
   this->silent = FALSE;
   this->wsize = 0;
   this->ssize = 0;
+  this->n_channels = 0;
+  this->cbegin = 0;
+  this->csize = 0;
   this->location = NULL;
 
   this->adapter = gst_adapter_new();
@@ -199,6 +220,12 @@ static void gval_mfcc_set_property(GObject* object,
     case PROP_N_CHANNELS:
       this->n_channels = g_value_get_uint(value);
       break;
+    case PROP_COEF_BEGIN:
+      this->cbegin = g_value_get_uint(value);
+      break;
+    case PROP_COEF_SIZE:
+      this->csize = g_value_get_uint(value);
+      break;
     case PROP_LOCATION:
       this->location = g_value_dup_string(value);
       break;
@@ -224,6 +251,12 @@ static void gval_mfcc_get_property(GObject* object,
       break;
     case PROP_N_CHANNELS:
       g_value_set_uint(value, this->n_channels);
+      break;
+    case PROP_COEF_BEGIN:
+      g_value_set_uint(value, this->cbegin);
+      break;
+    case PROP_COEF_SIZE:
+      g_value_set_uint(value, this->csize);
       break;
     case PROP_LOCATION:
       g_value_set_string(value, this->location);
@@ -260,6 +293,9 @@ static gboolean gval_mfcc_sink_event(GstBaseTransform* trans,
           printf("Window Size: %d\n", this->wsize);
           printf("Shift Size: %d\n", this->ssize);
           printf("# Filter Banks : %d\n", this->n_channels);
+          printf("Coef Begin Index : %d\n", this->cbegin);
+          printf("Coef Size : %d\n", this->csize);
+
         }
       }
       break;
@@ -305,8 +341,10 @@ static GstFlowReturn gval_mfcc_transform_ip(GstBaseTransform* trans,
         this->out = fopen(this->location, "w");
       }
       g_assert(this->out);
-      fwrite(mfcc, sizeof(double), this->n_channels,
-          this->out);
+      g_assert(this->cbegin + this->csize 
+          <= this->n_channels);
+      fwrite(mfcc + this->cbegin, sizeof(double),
+          this->csize, this->out);
     }
 
     g_free(mfcc);
