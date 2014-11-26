@@ -21,6 +21,9 @@ include_directories(${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_BASE_INCLUDE_DIRS})
 find_package(GLIB REQUIRED COMPONENTS gobject)
 include_directories(${GLIB_INCLUDE_DIRS})
 
+pkg_check_modules(OPENCV REQUIRED opencv)
+include_directories(${OPENCV_INCLUDE_DIRS})
+
 pkg_check_modules(FFTW REQUIRED fftw3)
 include_directories(${FFTW_INCLUDE_DIRS})
 

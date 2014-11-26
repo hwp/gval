@@ -11,3 +11,6 @@ target_link_libraries(gvalmfcc ${GSTREAMER_LIBRARIES}
 
 install(TARGETS gvalstft gvalmfcc LIBRARY DESTINATION lib/gstreamer-1.0)
 
+add_executable(display display_image.cpp)
+target_link_libraries(display ${OPENCV_LIBRARIES})
+
