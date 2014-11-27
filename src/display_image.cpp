@@ -1,31 +1,45 @@
+// display_image.cpp
+// display a image and show the keypoints
+//
+// Author : Weipeng He <heweipeng@gmail.com>
+// Copyright (c) 2014, All rights reserved.
+
 #include <opencv2/core/core.hpp>
+#include "opencv2/features2d/features2d.hpp"
+#include "opencv2/nonfree/features2d.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 
 using namespace cv;
-using namespace std;
 
-int main( int argc, char** argv )
-{
-    if( argc != 2)
-    {
-     cout <<" Usage: display_image ImageToLoadAndDisplay" << endl;
-     return -1;
-    }
+using std::cout;
+using std::endl;
 
-    Mat image;
-    image = imread(argv[1], CV_LOAD_IMAGE_COLOR);   // Read the file
+int main(int argc, char** argv) {
+  if (argc != 2) {
+    cout << "Usage: " << argv[0] << " <file>" << endl;
+    return -1;
+  }
 
-    if(! image.data )                              // Check for invalid input
-    {
-        cout <<  "Could not open or find the image" << std::endl ;
-        return -1;
-    }
+  Mat image;
+  image = imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE); // Read the file
 
-    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
-    imshow( "Display window", image );                   // Show our image inside it.
+  if (!image.data) {                                // Check for invalid input
+    cout <<  "Could not open or find the image" << endl;
+    return -1;
+  }
 
-    waitKey(0);                                          // Wait for a keystroke in the window
-    return 0;
+  SiftFeatureDetector detector;
+  std::vector<KeyPoint> points;
+  detector.detect(image, points);
+
+  drawKeypoints(image, points, image, Scalar::all(-1),
+      DrawMatchesFlags::DEFAULT);
+
+  namedWindow("Display window", WINDOW_AUTOSIZE);   // Create a window for display.
+  imshow("Display window", image);                  // Show our image inside it.
+
+  waitKey(0);                                       // Wait for a keystroke in the window
+  return 0;
 }
 
