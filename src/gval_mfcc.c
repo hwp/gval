@@ -114,14 +114,11 @@ static GstFlowReturn gval_mfcc_transform_ip(GstBaseTransform* trans,
 
 /* initialize the mfcc's class */
 static void gval_mfcc_class_init(GvalMfccClass* klass) {
-  GObjectClass* gobject_class = (GObjectClass*) klass;
+  GObjectClass* gobject_class = G_OBJECT_CLASS(klass);
   GstElementClass* gstelement_class
-    = (GstElementClass*) klass;
+    = GST_ELEMENT_CLASS(klass);
   GstBaseTransformClass* base_transform_class
     = GST_BASE_TRANSFORM_CLASS (klass);
-
-  gobject_class = (GObjectClass*) klass;
-  gstelement_class = (GstElementClass*) klass;
 
   gobject_class->set_property = gval_mfcc_set_property;
   gobject_class->get_property = gval_mfcc_get_property;
@@ -343,7 +340,7 @@ static GstFlowReturn gval_mfcc_transform_ip(GstBaseTransform* trans,
         this->out = fopen(this->location, "w");
       }
       g_assert(this->out);
-      g_assert(this->cbegin + this->csize 
+      g_assert(this->cbegin + this->csize
           <= this->n_channels);
       fwrite(mfcc + this->cbegin, sizeof(double),
           this->csize, this->out);
@@ -365,39 +362,25 @@ static GstFlowReturn gval_mfcc_transform_ip(GstBaseTransform* trans,
  * initialize the plug-in itself
  * register the element factories and other features
  */
-static gboolean mfcc_init(GstPlugin* mfcc) {
+static gboolean plugin_init(GstPlugin* plugin) {
   /* debug category for fltering log messages
    */
   GST_DEBUG_CATEGORY_INIT(gval_mfcc_debug, "mfcc",
       0, "Mel-frequency Cepstrum Coefficient");
 
-  return gst_element_register(mfcc, "mfcc", GST_RANK_NONE,
+  return gst_element_register(plugin, "mfcc", GST_RANK_NONE,
       GVAL_TYPE_MFCC);
 }
 
-/* PACKAGE: this is usually set by autotools depending on some _INIT macro
- * in configure.ac and then written into and defined in config.h, but we can
- * just set it ourselves here in case someone doesn't use autotools to
- * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
- */
-#ifndef PACKAGE
-#define PACKAGE "gval-package"
-#endif
-#ifndef GST_PACKAGE_ORIGIN
-#define GST_PACKAGE_ORIGIN "http://www.github.com/hwp/gval"
-#endif
-
-
-/* gstreamer looks for this structure to register mfccs
- */
 GST_PLUGIN_DEFINE(
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     mfcc,
     "Mel-frequency Cepstrum Coefficient",
-    mfcc_init,
+    plugin_init,
     VERSION,
     "GPL",
-    "Unknown",
+    PACKAGE_NAME,
     GST_PACKAGE_ORIGIN
     );
+

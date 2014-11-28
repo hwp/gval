@@ -33,9 +33,7 @@
 
 G_BEGIN_DECLS
 
-/* #defines don't like whitespacey bits */
-#define GVAL_TYPE_STFT \
-  (gval_stft_get_type())
+#define GVAL_TYPE_STFT (gval_stft_get_type())
 #define GVAL_STFT(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST((obj),GVAL_TYPE_STFT,GvalStft))
 #define GVAL_STFT_CLASS(klass) \

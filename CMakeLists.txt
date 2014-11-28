@@ -7,13 +7,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 project(gval)
 
-set(PACKAGE "gval")
-set(PACKAGE_NAME "GVAL")
+set(PACKAGE "gval-package")
+set(PACKAGE_NAME "General Video-Audio Learning")
 set(PACKAGE_VERSION "1.0.1")
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_URL "http://www.github.com/hwp/gval")
 
+add_definitions(-DPACKAGE="${PACKAGE}")
+add_definitions(-DPACKAGE_NAME="${PACKAGE_NAME}")
 add_definitions(-DVERSION="${PACKAGE_VERSION}")
+add_definitions(-DGST_PACKAGE_ORIGIN="${PACKAGE_URL}")
 
 find_package(GStreamer REQUIRED audio)
 include_directories(${GSTREAMER_INCLUDE_DIRS} 

@@ -34,8 +34,7 @@
 G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
-#define GVAL_TYPE_MFCC \
-  (gval_mfcc_get_type())
+#define GVAL_TYPE_MFCC (gval_mfcc_get_type())
 #define GVAL_MFCC(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST((obj),GVAL_TYPE_MFCC,GvalMfcc))
 #define GVAL_MFCC_CLASS(klass) \

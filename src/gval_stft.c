@@ -42,12 +42,6 @@ GST_DEBUG_CATEGORY_STATIC(gval_stft_debug);
 #define MAX_SHIFT_SIZE 65536
 #define DEFAULT_SHIFT_SIZE 256
 
-/* Filter signals and args */
-enum {
-  /* FILL ME */
-  LAST_SIGNAL
-};
-
 enum {
   PROP_0,
 
@@ -101,14 +95,11 @@ static void print_caps(const GstCaps* caps, const gchar* pfx);
 
 /* initialize the stft's class */
 static void gval_stft_class_init(GvalStftClass* klass) {
-  GObjectClass* gobject_class = (GObjectClass*) klass;
+  GObjectClass* gobject_class = G_OBJECT_CLASS(klass);
   GstElementClass* gstelement_class
-    = (GstElementClass*) klass;
+    = GST_ELEMENT_CLASS(klass);
   GstBaseTransformClass* base_transform_class
     = GST_BASE_TRANSFORM_CLASS (klass);
-
-  gobject_class = (GObjectClass*) klass;
-  gstelement_class = (GstElementClass*) klass;
 
   gobject_class->set_property = gval_stft_set_property;
   gobject_class->get_property = gval_stft_get_property;
@@ -133,8 +124,7 @@ static void gval_stft_class_init(GvalStftClass* klass) {
       N_PROPERTIES, stft_props);
 
   gst_element_class_set_details_simple(gstelement_class,
-      "stft",
-      "gval/feature",
+      "stft", "gval/feature",
       "Short Time Fourier Transform",
       "Weipeng He <heweipeng@gmail.com>");
 
@@ -337,39 +327,25 @@ static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
  * initialize the plug-in itself
  * register the element factories and other features
  */
-static gboolean stft_init(GstPlugin* stft) {
+static gboolean plugin_init(GstPlugin* plugin) {
   /* debug category for fltering log messages
    */
   GST_DEBUG_CATEGORY_INIT(gval_stft_debug, "stft",
       0, "Short Time Fourier Transform");
 
-  return gst_element_register(stft, "stft", GST_RANK_NONE,
+  return gst_element_register(plugin, "stft", GST_RANK_NONE,
       GVAL_TYPE_STFT);
 }
 
-/* PACKAGE: this is usually set by autotools depending on some _INIT macro
- * in configure.ac and then written into and defined in config.h, but we can
- * just set it ourselves here in case someone doesn't use autotools to
- * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
- */
-#ifndef PACKAGE
-#define PACKAGE "gval-package"
-#endif
-#ifndef GST_PACKAGE_ORIGIN
-#define GST_PACKAGE_ORIGIN "http://www.github.com/hwp/gval"
-#endif
-
-
-/* gstreamer looks for this structure to register stfts
- */
 GST_PLUGIN_DEFINE(
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     stft,
     "Short Time Fourier Transform",
-    stft_init,
+    plugin_init,
     VERSION,
     "GPL",
-    "Unknown",
+    PACKAGE_NAME,
     GST_PACKAGE_ORIGIN
     );
+
