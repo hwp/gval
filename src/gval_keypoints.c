@@ -31,6 +31,8 @@
 #include <gst/video/video.h>
 #include <gst/video/gstvideofilter.h>
 
+#include <stdio.h>
+
 GST_DEBUG_CATEGORY_STATIC(gval_keypoints_debug_category);
 #define GST_CAT_DEFAULT gval_keypoints_debug_category
 
@@ -120,10 +122,8 @@ void gval_keypoints_set_property(GObject* object, guint property_id,
   }
 }
 
-void
-gval_keypoints_get_property(GObject* object, guint property_id,
-    GValue* value, GParamSpec* pspec)
-{
+void gval_keypoints_get_property(GObject* object,
+    guint property_id, GValue* value, GParamSpec* pspec) {
   GvalKeypoints* keypoints = GVAL_KEYPOINTS(object);
 
   GST_DEBUG_OBJECT(keypoints, "get_property");
@@ -145,11 +145,34 @@ void gval_keypoints_dispose (GObject* object) {
   G_OBJECT_CLASS(gval_keypoints_parent_class)->dispose(object);
 }
 
-static gboolean
-gval_keypoints_set_info(GstVideoFilter* filter, GstCaps* incaps,
-    GstVideoInfo* in_info, GstCaps* outcaps, GstVideoInfo* out_info)
-{
+static gboolean gval_keypoints_set_info(GstVideoFilter* filter,
+    GstCaps* incaps, GstVideoInfo* in_info,
+    GstCaps* outcaps, GstVideoInfo* out_info) {
   GvalKeypoints* keypoints = GVAL_KEYPOINTS(filter);
+
+  printf("in info\n");
+  printf("format: %s\n", in_info->finfo->name);
+  printf("description: %s\n", in_info->finfo->description);
+  printf("width: %d\n", in_info->width);
+  printf("height: %d\n", in_info->height);
+  printf("size: %zd\n", in_info->size);
+  printf("views: %d\n", in_info->views);
+  printf("par_n: %d\n", in_info->par_n);
+  printf("par_d: %d\n", in_info->par_d);
+  printf("fps_n: %d\n", in_info->fps_n);
+  printf("fps_d: %d\n", in_info->fps_d);
+
+  printf("out info\n");
+  printf("format: %s\n", out_info->finfo->name);
+  printf("description: %s\n", out_info->finfo->description);
+  printf("width: %d\n", out_info->width);
+  printf("height: %d\n", out_info->height);
+  printf("size: %zd\n", out_info->size);
+  printf("views: %d\n", out_info->views);
+  printf("par_n: %d\n", out_info->par_n);
+  printf("par_d: %d\n", out_info->par_d);
+  printf("fps_n: %d\n", out_info->fps_n);
+  printf("fps_d: %d\n", out_info->fps_d);
 
   GST_DEBUG_OBJECT(keypoints, "set_info");
 
@@ -157,8 +180,7 @@ gval_keypoints_set_info(GstVideoFilter* filter, GstCaps* incaps,
 }
 
 static GstFlowReturn gval_keypoints_transform_frame_ip(GstVideoFilter* filter,
-    GstVideoFrame* frame)
-{
+    GstVideoFrame* frame) {
   GvalKeypoints* keypoints = GVAL_KEYPOINTS(filter);
 
   GST_DEBUG_OBJECT(keypoints, "transform_frame_ip");
