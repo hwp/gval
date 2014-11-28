@@ -15,8 +15,10 @@ set(PACKAGE_URL "http://www.github.com/hwp/gval")
 
 add_definitions(-DVERSION="${PACKAGE_VERSION}")
 
-find_package(GStreamer REQUIRED)
-include_directories(${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_BASE_INCLUDE_DIRS})
+find_package(GStreamer REQUIRED audio)
+include_directories(${GSTREAMER_INCLUDE_DIRS} 
+  ${GSTREAMER_BASE_INCLUDE_DIRS}
+  ${GSTREAMER_AUDIO_INCLUDE_DIRS})
 
 find_package(GLIB REQUIRED COMPONENTS gobject)
 include_directories(${GLIB_INCLUDE_DIRS})

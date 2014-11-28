@@ -7,7 +7,8 @@ target_link_libraries(gvalstft ${GSTREAMER_LIBRARIES}
 
 add_library(gvalmfcc SHARED gval_mfcc.c gval_utils.c)
 target_link_libraries(gvalmfcc ${GSTREAMER_LIBRARIES}
-  ${GSTREAMER_BASE_LIBRARIES} ${FFTW_LIBRARIES})
+  ${GSTREAMER_BASE_LIBRARIES} ${GSTREAMER_AUDIO_LIBRARIES}
+  ${FFTW_LIBRARIES})
 
 install(TARGETS gvalstft gvalmfcc LIBRARY DESTINATION lib/gstreamer-1.0)
 

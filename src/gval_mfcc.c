@@ -30,6 +30,7 @@
 
 #include <math.h>
 #include <gst/gst.h>
+#include <gst/audio/audio.h>
 
 GST_DEBUG_CATEGORY_STATIC(gval_mfcc_debug);
 #define GST_CAT_DEFAULT gval_mfcc_debug
@@ -282,11 +283,12 @@ static gboolean gval_mfcc_sink_event(GstBaseTransform* trans,
       ret = GST_BASE_TRANSFORM_CLASS(gval_mfcc_parent_class)
         ->sink_event(trans, event);
       {
-        GstCaps* caps = gst_pad_get_current_caps(
-            GST_BASE_TRANSFORM_SRC_PAD(trans));
-        GstStructure* s = gst_caps_get_structure(caps, 0);
-        this->rate = g_value_get_int(
-            gst_structure_get_value(s, "rate"));
+        GstAudioInfo* ainfo = gst_audio_info_new();
+        gst_audio_info_from_caps(ainfo,
+            gst_pad_get_current_caps(
+              GST_BASE_TRANSFORM_SRC_PAD(trans)));
+        this->rate = ainfo->rate;
+        gst_audio_info_free(ainfo);
 
         if (!this->silent) {
           printf("Sample Rate : %d\n", this->rate);
