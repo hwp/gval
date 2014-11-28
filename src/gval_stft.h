@@ -26,8 +26,8 @@
 
 #include "gval_utils.h"
 
+#include <gst/audio/gstaudiofilter.h>
 #include <gst/base/gstadapter.h>
-#include <gst/base/gstbasetransform.h>
 
 #include <stdio.h>
 
@@ -44,7 +44,7 @@ G_BEGIN_DECLS
   (G_TYPE_CHECK_CLASS_TYPE((klass),GVAL_TYPE_STFT))
 
 typedef struct {
-  GstBaseTransform base;
+  GstAudioFilter base;
 
   gboolean silent;
   guint wsize;
@@ -58,7 +58,7 @@ typedef struct {
 } GvalStft;
 
 typedef struct {
-  GstBaseTransformClass parent_class;
+  GstAudioFilterClass parent_class;
 } GvalStftClass;
 
 GType gval_stft_get_type(void);

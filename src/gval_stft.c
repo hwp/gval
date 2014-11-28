@@ -77,7 +77,7 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE("src",
     );
 
 #define gval_stft_parent_class parent_class
-G_DEFINE_TYPE(GvalStft, gval_stft, GST_TYPE_BASE_TRANSFORM);
+G_DEFINE_TYPE(GvalStft, gval_stft, GST_TYPE_AUDIO_FILTER);
 
 static void gval_stft_dispose(GObject* object);
 static void gval_stft_set_property(GObject* object, guint prop_id,
@@ -85,13 +85,10 @@ static void gval_stft_set_property(GObject* object, guint prop_id,
 static void gval_stft_get_property(GObject* object, guint prop_id,
     GValue* value, GParamSpec* pspec);
 
-static gboolean gval_stft_sink_event(GstBaseTransform* trans,
-    GstEvent* event);
+static gboolean gval_stft_setup(GstAudioFilter* filter,
+    const GstAudioInfo* info);
 static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
     GstBuffer* inbuf);
-
-static gboolean print_field(GQuark field, const GValue* value, gpointer pfx);
-static void print_caps(const GstCaps* caps, const gchar* pfx);
 
 /* initialize the stft's class */
 static void gval_stft_class_init(GvalStftClass* klass) {
@@ -100,6 +97,8 @@ static void gval_stft_class_init(GvalStftClass* klass) {
     = GST_ELEMENT_CLASS(klass);
   GstBaseTransformClass* base_transform_class
     = GST_BASE_TRANSFORM_CLASS (klass);
+  GstAudioFilterClass* audio_filter_class
+    = GST_AUDIO_FILTER_CLASS(klass);
 
   gobject_class->set_property = gval_stft_set_property;
   gobject_class->get_property = gval_stft_get_property;
@@ -133,8 +132,8 @@ static void gval_stft_class_init(GvalStftClass* klass) {
   gst_element_class_add_pad_template(gstelement_class,
       gst_static_pad_template_get(&sink_factory));
 
-  base_transform_class->sink_event
-    = GST_DEBUG_FUNCPTR(gval_stft_sink_event);
+  audio_filter_class->setup 
+    = GST_DEBUG_FUNCPTR(gval_stft_setup);
   base_transform_class->transform_ip
     = GST_DEBUG_FUNCPTR(gval_stft_transform_ip);
 }
@@ -214,68 +213,19 @@ static void gval_stft_get_property(GObject* object,
 
 /* GstElement vmethod implementations */
 
-/* this function handles sink events */
-static gboolean gval_stft_sink_event(GstBaseTransform* trans,
-    GstEvent* event) {
-  GvalStft* this = GVAL_STFT(trans);
+static gboolean gval_stft_setup (GstAudioFilter* filter,
+    const GstAudioInfo* info) {
+  GvalStft* this = GVAL_STFT(filter);
 
-  gboolean ret;
-  GstCaps* caps = NULL;
-
-  switch (GST_EVENT_TYPE(event)) {
-    case GST_EVENT_CAPS:
-      gst_event_parse_caps(event, &caps);
-
-      if (!this->silent) {
-        print_caps(caps, "");
-      }
-
-      /* and forward */
-      ret = GST_BASE_TRANSFORM_CLASS(gval_stft_parent_class)
-        ->sink_event(trans, event);
-      break;
-    default:
-      ret = GST_BASE_TRANSFORM_CLASS(gval_stft_parent_class)
-        ->sink_event(trans, event);
-      break;
+  if (!this->silent) {
+    printf("Sample Rate : %d\n", info->rate);
+    printf("Window Size: %d\n", this->wsize);
+    printf("Shift Size: %d\n", this->ssize);
   }
-  return ret;
-}
 
-/* Functions below print the Capabilities in a human-friendly format */
-static gboolean print_field(GQuark field, const GValue* value, gpointer pfx) {
-  gchar* str = gst_value_serialize(value);
-
-  g_print("%s  %15s: %s\n", (gchar*) pfx, g_quark_to_string(field), str);
-  g_free(str);
   return TRUE;
 }
 
-static void print_caps(const GstCaps* caps, const gchar* pfx) {
-  guint i;
-
-  g_return_if_fail(caps != NULL);
-
-  if (gst_caps_is_any(caps)) {
-    g_print("%sANY\n", pfx);
-    return;
-  }
-  if (gst_caps_is_empty(caps)) {
-    g_print("%sEMPTY\n", pfx);
-    return;
-  }
-
-  for (i = 0; i < gst_caps_get_size(caps); i++) {
-    GstStructure* structure = gst_caps_get_structure(caps, i);
-
-    g_print("%s%s\n", pfx, gst_structure_get_name(structure));
-    gst_structure_foreach(structure, print_field, (gpointer) pfx);
-  }
-}
-
-/* chain function
- * this function does the actual processing
- */
 static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
     GstBuffer* buf) {
   GvalStft* this = GVAL_STFT(trans);

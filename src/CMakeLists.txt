@@ -3,7 +3,8 @@
 
 add_library(gvalstft SHARED gval_stft.c gval_utils.c)
 target_link_libraries(gvalstft ${GSTREAMER_LIBRARIES}
-  ${GSTREAMER_BASE_LIBRARIES} ${FFTW_LIBRARIES})
+  ${GSTREAMER_BASE_LIBRARIES} ${GSTREAMER_AUDIO_LIBRARIES}
+  ${FFTW_LIBRARIES})
 
 add_library(gvalmfcc SHARED gval_mfcc.c gval_utils.c)
 target_link_libraries(gvalmfcc ${GSTREAMER_LIBRARIES}

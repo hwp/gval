@@ -98,8 +98,7 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE("src",
     GST_STATIC_CAPS("ANY")
     );
 
-#define gval_mfcc_parent_class parent_class
-G_DEFINE_TYPE(GvalMfcc, gval_mfcc, GST_TYPE_BASE_TRANSFORM);
+G_DEFINE_TYPE(GvalMfcc, gval_mfcc, GST_TYPE_AUDIO_FILTER);
 
 static void gval_mfcc_dispose(GObject* object);
 static void gval_mfcc_set_property(GObject* object, guint prop_id,
@@ -107,8 +106,8 @@ static void gval_mfcc_set_property(GObject* object, guint prop_id,
 static void gval_mfcc_get_property(GObject* object, guint prop_id,
     GValue* value, GParamSpec* pspec);
 
-static gboolean gval_mfcc_sink_event(GstBaseTransform* trans,
-    GstEvent* event);
+static gboolean gval_mfcc_setup(GstAudioFilter* filter,
+    const GstAudioInfo* info);
 static GstFlowReturn gval_mfcc_transform_ip(GstBaseTransform* trans,
     GstBuffer* inbuf);
 
@@ -118,7 +117,9 @@ static void gval_mfcc_class_init(GvalMfccClass* klass) {
   GstElementClass* gstelement_class
     = GST_ELEMENT_CLASS(klass);
   GstBaseTransformClass* base_transform_class
-    = GST_BASE_TRANSFORM_CLASS (klass);
+    = GST_BASE_TRANSFORM_CLASS(klass);
+  GstAudioFilterClass* audio_filter_class
+    = GST_AUDIO_FILTER_CLASS(klass);
 
   gobject_class->set_property = gval_mfcc_set_property;
   gobject_class->get_property = gval_mfcc_get_property;
@@ -165,8 +166,8 @@ static void gval_mfcc_class_init(GvalMfccClass* klass) {
   gst_element_class_add_pad_template(gstelement_class,
       gst_static_pad_template_get(&sink_factory));
 
-  base_transform_class->sink_event
-    = GST_DEBUG_FUNCPTR(gval_mfcc_sink_event);
+  audio_filter_class->setup 
+    = GST_DEBUG_FUNCPTR(gval_mfcc_setup);
   base_transform_class->transform_ip
     = GST_DEBUG_FUNCPTR(gval_mfcc_transform_ip);
 }
@@ -267,43 +268,21 @@ static void gval_mfcc_get_property(GObject* object,
 
 /* GstElement vmethod implementations */
 
-/* this function handles sink events */
-static gboolean gval_mfcc_sink_event(GstBaseTransform* trans,
-    GstEvent* event) {
-  GvalMfcc* this = GVAL_MFCC(trans);
+static gboolean gval_mfcc_setup (GstAudioFilter* filter,
+    const GstAudioInfo* info) {
+  GvalMfcc* this = GVAL_MFCC(filter);
+  this->rate = info->rate;
 
-  gboolean ret;
-
-  switch (GST_EVENT_TYPE(event)) {
-    case GST_EVENT_CAPS:
-      /* forward */
-      ret = GST_BASE_TRANSFORM_CLASS(gval_mfcc_parent_class)
-        ->sink_event(trans, event);
-      {
-        GstAudioInfo* ainfo = gst_audio_info_new();
-        gst_audio_info_from_caps(ainfo,
-            gst_pad_get_current_caps(
-              GST_BASE_TRANSFORM_SRC_PAD(trans)));
-        this->rate = ainfo->rate;
-        gst_audio_info_free(ainfo);
-
-        if (!this->silent) {
-          printf("Sample Rate : %d\n", this->rate);
-          printf("Window Size: %d\n", this->wsize);
-          printf("Shift Size: %d\n", this->ssize);
-          printf("# Filter Banks : %d\n", this->n_channels);
-          printf("Coef Begin Index : %d\n", this->cbegin);
-          printf("Coef Size : %d\n", this->csize);
-
-        }
-      }
-      break;
-    default:
-      ret = GST_BASE_TRANSFORM_CLASS(gval_mfcc_parent_class)
-        ->sink_event(trans, event);
-      break;
+  if (!this->silent) {
+    printf("Sample Rate : %d\n", this->rate);
+    printf("Window Size: %d\n", this->wsize);
+    printf("Shift Size: %d\n", this->ssize);
+    printf("# Filter Banks : %d\n", this->n_channels);
+    printf("Coef Begin Index : %d\n", this->cbegin);
+    printf("Coef Size : %d\n", this->csize);
   }
-  return ret;
+
+  return TRUE;
 }
 
 /* chain function
