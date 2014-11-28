@@ -33,6 +33,14 @@ int main(int argc, char** argv) {
   std::vector<KeyPoint> points;
   detector.detect(image, points);
 
+  SiftDescriptorExtractor extractor;
+  Mat descriptor;
+  extractor.compute(image, points, descriptor);
+
+  FileStorage fs("test.xml", FileStorage::WRITE);
+  fs << "descriptor" << descriptor;
+  fs.release();
+
   drawKeypoints(image, points, image, Scalar::all(-1),
       DrawMatchesFlags::DEFAULT);
 
