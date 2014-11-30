@@ -26,6 +26,7 @@
 #endif
 
 #include "gval_keypoints.h"
+#include "gval_cv.hpp"
 
 #include <gst/gst.h>
 #include <gst/video/video.h>
@@ -57,11 +58,11 @@ enum {
 
 /* FIXME: add/remove formats you can handle */
 #define VIDEO_SRC_CAPS \
-    GST_VIDEO_CAPS_MAKE("{ I420, Y444, Y42B, UYVY, RGBA }")
+    GST_VIDEO_CAPS_MAKE("{ RGB }")
 
 /* FIXME: add/remove formats you can handle */
 #define VIDEO_SINK_CAPS \
-    GST_VIDEO_CAPS_MAKE("{ I420, Y444, Y42B, UYVY, RGBA }")
+    GST_VIDEO_CAPS_MAKE("{ RGB }")
 
 
 /* class initialization */
@@ -181,9 +182,11 @@ static gboolean gval_keypoints_set_info(GstVideoFilter* filter,
 
 static GstFlowReturn gval_keypoints_transform_frame_ip(GstVideoFilter* filter,
     GstVideoFrame* frame) {
-  GvalKeypoints* keypoints = GVAL_KEYPOINTS(filter);
-
-  GST_DEBUG_OBJECT(keypoints, "transform_frame_ip");
+  //GvalKeypoints* this = GVAL_KEYPOINTS(filter);
+  
+  draw_keypoints(GST_VIDEO_FRAME_PLANE_DATA(frame, 0),
+      GST_VIDEO_FRAME_HEIGHT(frame),
+      GST_VIDEO_FRAME_WIDTH(frame));
 
   return GST_FLOW_OK;
 }

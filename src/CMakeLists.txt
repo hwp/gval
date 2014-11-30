@@ -11,9 +11,10 @@ target_link_libraries(gvalmfcc ${GSTREAMER_LIBRARIES}
   ${GSTREAMER_BASE_LIBRARIES} ${GSTREAMER_AUDIO_LIBRARIES}
   ${FFTW_LIBRARIES})
 
-add_library(gvalkeypoints SHARED gval_keypoints.c)
+add_library(gvalkeypoints SHARED gval_keypoints.c gval_cv.cpp)
 target_link_libraries(gvalkeypoints ${GSTREAMER_LIBRARIES}
-  ${GSTREAMER_BASE_LIBRARIES} ${GSTREAMER_VIDEO_LIBRARIES})
+  ${GSTREAMER_BASE_LIBRARIES} ${GSTREAMER_VIDEO_LIBRARIES}
+  ${OPENCV_LIBRARIES})
 
 install(TARGETS gvalstft gvalmfcc gvalkeypoints
   LIBRARY DESTINATION lib/gstreamer-1.0)
