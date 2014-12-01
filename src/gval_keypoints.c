@@ -21,10 +21,6 @@
  * Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "gval_keypoints.h"
 #include "gval_cv.hpp"
 
@@ -34,25 +30,12 @@
 
 #include <stdio.h>
 
-GST_DEBUG_CATEGORY_STATIC(gval_keypoints_debug_category);
-#define GST_CAT_DEFAULT gval_keypoints_debug_category
-
 /* prototypes */
-
-static void gval_keypoints_set_property(GObject* object,
-    guint property_id, const GValue* value, GParamSpec* pspec);
-static void gval_keypoints_get_property(GObject* object,
-    guint property_id, GValue* value, GParamSpec* pspec);
-static void gval_keypoints_dispose(GObject* object);
 
 static gboolean gval_keypoints_set_info(GstVideoFilter* filter, GstCaps* incaps,
     GstVideoInfo* in_info, GstCaps* outcaps, GstVideoInfo* out_info);
 static GstFlowReturn gval_keypoints_transform_frame_ip(
     GstVideoFilter* filter, GstVideoFrame* frame);
-
-enum {
-  PROP_0
-};
 
 /* pad templates */
 
@@ -62,14 +45,11 @@ enum {
 
 /* class initialization */
 
-G_DEFINE_TYPE_WITH_CODE(GvalKeypoints, gval_keypoints,
-    GST_TYPE_VIDEO_FILTER,
-    GST_DEBUG_CATEGORY_INIT(gval_keypoints_debug_category,
-      "keypoints", 0,
-      "debug category for keypoints element"));
+G_DEFINE_TYPE(GvalKeypoints, gval_keypoints,
+    GST_TYPE_VIDEO_FILTER)
 
 static void gval_keypoints_class_init(GvalKeypointsClass* klass) {
-  GObjectClass* gobject_class = G_OBJECT_CLASS(klass);
+  //GObjectClass* gobject_class = G_OBJECT_CLASS(klass);
   //GstBaseTransformClass* base_transform_class
   //  = GST_BASE_TRANSFORM_CLASS(klass);
   GstVideoFilterClass* video_filter_class
@@ -90,10 +70,6 @@ static void gval_keypoints_class_init(GvalKeypointsClass* klass) {
       "Key Points", "gval/visualize", "Draw Key Points",
       "Weipeng He <heweipeng@gmail.com>");
 
-  gobject_class->set_property = gval_keypoints_set_property;
-  gobject_class->get_property = gval_keypoints_get_property;
-  gobject_class->dispose = gval_keypoints_dispose;
-
   video_filter_class->set_info
     = GST_DEBUG_FUNCPTR(gval_keypoints_set_info);
   video_filter_class->transform_frame_ip
@@ -104,48 +80,9 @@ static void gval_keypoints_init(GvalKeypoints* keypoints) {
   // TODO
 }
 
-void gval_keypoints_set_property(GObject* object, guint property_id,
-    const GValue* value, GParamSpec* pspec)
-{
-  GvalKeypoints* keypoints = GVAL_KEYPOINTS(object);
-
-  GST_DEBUG_OBJECT(keypoints, "set_property");
-
-  switch(property_id) {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-      break;
-  }
-}
-
-void gval_keypoints_get_property(GObject* object,
-    guint property_id, GValue* value, GParamSpec* pspec) {
-  GvalKeypoints* keypoints = GVAL_KEYPOINTS(object);
-
-  GST_DEBUG_OBJECT(keypoints, "get_property");
-
-  switch (property_id) {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-      break;
-  }
-}
-
-void gval_keypoints_dispose (GObject* object) {
-  GvalKeypoints* keypoints = GVAL_KEYPOINTS(object);
-
-  GST_DEBUG_OBJECT(keypoints, "dispose");
-
-  /* clean up as possible.  may be called multiple times */
-
-  G_OBJECT_CLASS(gval_keypoints_parent_class)->dispose(object);
-}
-
 static gboolean gval_keypoints_set_info(GstVideoFilter* filter,
     GstCaps* incaps, GstVideoInfo* in_info,
     GstCaps* outcaps, GstVideoInfo* out_info) {
-  GvalKeypoints* keypoints = GVAL_KEYPOINTS(filter);
-
   printf("in info\n");
   printf("format: %s\n", in_info->finfo->name);
   printf("description: %s\n", in_info->finfo->description);
@@ -170,8 +107,6 @@ static gboolean gval_keypoints_set_info(GstVideoFilter* filter,
   printf("fps_n: %d\n", out_info->fps_n);
   printf("fps_d: %d\n", out_info->fps_d);
 
-  GST_DEBUG_OBJECT(keypoints, "set_info");
-
   return TRUE;
 }
 
@@ -185,21 +120,4 @@ static GstFlowReturn gval_keypoints_transform_frame_ip(GstVideoFilter* filter,
 
   return GST_FLOW_OK;
 }
-
-static gboolean plugin_init(GstPlugin* plugin) {
-  return gst_element_register(plugin, "keypoints",
-      GST_RANK_NONE, GVAL_TYPE_KEYPOINTS);
-}
-
-GST_PLUGIN_DEFINE(
-    GST_VERSION_MAJOR,
-    GST_VERSION_MINOR,
-    keypoints,
-    "Draw Key Points",
-    plugin_init,
-    VERSION,
-    "GPL",
-    PACKAGE_NAME,
-    GST_PACKAGE_ORIGIN
-    );
 

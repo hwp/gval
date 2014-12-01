@@ -21,19 +21,12 @@
  * Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
-
 #include "gval_mfcc.h"
 #include "gval_utils.h"
 
 #include <math.h>
 #include <gst/gst.h>
 #include <gst/audio/audio.h>
-
-GST_DEBUG_CATEGORY_STATIC(gval_mfcc_debug);
-#define GST_CAT_DEFAULT gval_mfcc_debug
 
 #define MIN_WINDOW_SIZE 4
 #define MAX_WINDOW_SIZE 65536
@@ -336,30 +329,4 @@ static GstFlowReturn gval_mfcc_transform_ip(GstBaseTransform* trans,
 
   return GST_FLOW_OK;
 }
-
-/* entry point to initialize the plug-in
- * initialize the plug-in itself
- * register the element factories and other features
- */
-static gboolean plugin_init(GstPlugin* plugin) {
-  /* debug category for fltering log messages
-   */
-  GST_DEBUG_CATEGORY_INIT(gval_mfcc_debug, "mfcc",
-      0, "Mel-frequency Cepstrum Coefficient");
-
-  return gst_element_register(plugin, "mfcc", GST_RANK_NONE,
-      GVAL_TYPE_MFCC);
-}
-
-GST_PLUGIN_DEFINE(
-    GST_VERSION_MAJOR,
-    GST_VERSION_MINOR,
-    mfcc,
-    "Mel-frequency Cepstrum Coefficient",
-    plugin_init,
-    VERSION,
-    "GPL",
-    PACKAGE_NAME,
-    GST_PACKAGE_ORIGIN
-    );
 

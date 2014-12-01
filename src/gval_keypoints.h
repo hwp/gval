@@ -47,7 +47,7 @@ typedef struct {
   GstVideoFilterClass base_class;
 } GvalKeypointsClass;
 
-GType gst_keypoints_get_type(void);
+GType gval_keypoints_get_type(void);
 
 G_END_DECLS
 

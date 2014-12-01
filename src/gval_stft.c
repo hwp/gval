@@ -21,10 +21,6 @@
  * Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
-
 #include "gval_stft.h"
 #include "gval_utils.h"
 
@@ -267,30 +263,4 @@ static GstFlowReturn gval_stft_transform_ip(GstBaseTransform* trans,
 
   return GST_FLOW_OK;
 }
-
-/* entry point to initialize the plug-in
- * initialize the plug-in itself
- * register the element factories and other features
- */
-static gboolean plugin_init(GstPlugin* plugin) {
-  /* debug category for fltering log messages
-   */
-  GST_DEBUG_CATEGORY_INIT(gval_stft_debug, "stft",
-      0, "Short Time Fourier Transform");
-
-  return gst_element_register(plugin, "stft", GST_RANK_NONE,
-      GVAL_TYPE_STFT);
-}
-
-GST_PLUGIN_DEFINE(
-    GST_VERSION_MAJOR,
-    GST_VERSION_MINOR,
-    stft,
-    "Short Time Fourier Transform",
-    plugin_init,
-    VERSION,
-    "GPL",
-    PACKAGE_NAME,
-    GST_PACKAGE_ORIGIN
-    );
 

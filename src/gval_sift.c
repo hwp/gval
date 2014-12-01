@@ -21,10 +21,6 @@
  * Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "gval_sift.h"
 #include "gval_cv.hpp"
 
@@ -33,9 +29,6 @@
 #include <gst/video/gstvideofilter.h>
 
 #include <stdio.h>
-
-GST_DEBUG_CATEGORY_STATIC(gval_sift_debug_category);
-#define GST_CAT_DEFAULT gval_sift_debug_category
 
 /* prototypes */
 
@@ -69,11 +62,7 @@ static GParamSpec* sift_props[N_PROPERTIES] = { NULL, };
 
 /* class initialization */
 
-G_DEFINE_TYPE_WITH_CODE(GvalSift, gval_sift,
-    GST_TYPE_VIDEO_FILTER,
-    GST_DEBUG_CATEGORY_INIT(gval_sift_debug_category,
-      "sift", 0,
-      "debug category for sift element"));
+G_DEFINE_TYPE(GvalSift, gval_sift, GST_TYPE_VIDEO_FILTER);
 
 static void gval_sift_class_init(GvalSiftClass* klass) {
   GObjectClass* gobject_class = G_OBJECT_CLASS(klass);
@@ -220,21 +209,4 @@ static GstFlowReturn gval_sift_transform_frame_ip(GstVideoFilter* filter,
 
   return GST_FLOW_OK;
 }
-
-static gboolean plugin_init(GstPlugin* plugin) {
-  return gst_element_register(plugin, "sift",
-      GST_RANK_NONE, GVAL_TYPE_SIFT);
-}
-
-GST_PLUGIN_DEFINE(
-    GST_VERSION_MAJOR,
-    GST_VERSION_MINOR,
-    gval_plugin,
-    "SIFT",
-    plugin_init,
-    VERSION,
-    "GPL",
-    PACKAGE_NAME,
-    GST_PACKAGE_ORIGIN
-    );
 

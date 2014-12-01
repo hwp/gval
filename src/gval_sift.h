@@ -54,7 +54,7 @@ typedef struct {
   GstVideoFilterClass base_class;
 } GvalSiftClass;
 
-GType gst_sift_get_type(void);
+GType gval_sift_get_type(void);
 
 G_END_DECLS
 
