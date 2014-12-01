@@ -35,7 +35,18 @@
  * The raw data should be in 8-bit RGB format.
  */
 EXTERNC
-void draw_keypoints(unsigned char* img, int rows, int cols);
+void gval_draw_keypoints(void* img, int rows, int cols);
+
+/**
+ * Extract SIFT descriptors.
+ * The raw data should be in 8-bit RGB format.
+ *
+ * The data type of result is float (32-bit).
+ * The result is should be freed using free();
+ */
+EXTERNC
+void gval_extract_descriptor(void* img, int rows,
+    int cols, void** result, int* n_points, int* dim);
 
 #undef EXTERNC
 

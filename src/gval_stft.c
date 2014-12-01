@@ -138,11 +138,6 @@ static void gval_stft_class_init(GvalStftClass* klass) {
     = GST_DEBUG_FUNCPTR(gval_stft_transform_ip);
 }
 
-/* initialize the new element
- * instantiate pads and add them to element
- * set pad calback functions
- * initialize instance structure
- */
 static void gval_stft_init(GvalStft* this) {
   this->silent = FALSE;
   this->wsize = 0;

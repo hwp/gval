@@ -1,7 +1,7 @@
 /* GVAL
  * Copyright (c) 2014, Weipeng He <heweipeng@gmail.com>
  *
- * gval_keypoints.h : Show keypoints in video
+ * gval_sift.h : Extract SIFT descriptors
  *
  * This program is free software; you can redistribute it
  * and/or modify it under the terms of the GNU General
@@ -21,35 +21,42 @@
  * Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef GVAL_KEYPOINTS_H_
-#define GVAL_KEYPOINTS_H_
+#ifndef GVAL_SIFT_H_
+#define GVAL_SIFT_H_
+
+#include <stdio.h>
 
 #include <gst/video/video.h>
 #include <gst/video/gstvideofilter.h>
 
 G_BEGIN_DECLS
 
-#define GVAL_TYPE_KEYPOINTS (gval_keypoints_get_type())
-#define GVAL_KEYPOINTS(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GVAL_TYPE_KEYPOINTS,GvalKeypoints))
-#define GVAL_KEYPOINTS_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GVAL_TYPE_KEYPOINTS,GvalKeypointsClass))
-#define GVAL_IS_KEYPOINTS(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GVAL_TYPE_KEYPOINTS))
-#define GVAL_IS_KEYPOINTS_CLASS(obj) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GVAL_TYPE_KEYPOINTS))
+#define GVAL_TYPE_SIFT (gval_sift_get_type())
+#define GVAL_SIFT(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GVAL_TYPE_SIFT,GvalSift))
+#define GVAL_SIFT_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GVAL_TYPE_SIFT,GvalSiftClass))
+#define GVAL_IS_SIFT(obj) \
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GVAL_TYPE_SIFT))
+#define GVAL_IS_SIFT_CLASS(obj) \
+  (G_TYPE_CHECK_CLASS_TYPE((klass),GVAL_TYPE_SIFT))
 
 typedef struct {
   GstVideoFilter base;
-} GvalKeypoints;
+
+  gboolean silent;
+  const gchar* location;
+
+  FILE* out;
+} GvalSift;
 
 typedef struct {
   GstVideoFilterClass base_class;
-} GvalKeypointsClass;
+} GvalSiftClass;
 
-GType gst_keypoints_get_type(void);
+GType gst_sift_get_type(void);
 
 G_END_DECLS
 
-#endif  // GVAL_KEYPOINTS_H_
+#endif  // GVAL_SIFT_H_
 

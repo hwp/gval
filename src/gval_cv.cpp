@@ -27,9 +27,17 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 
+#include <assert.h>
+
 using namespace cv;
 
-void draw_keypoints(unsigned char* img, int rows, int cols) {
+/**
+ * single channel matrix
+ */
+void gval_mat2bytes(Mat& matrix, void** result,
+    int* rows, int* cols);
+
+void gval_draw_keypoints(void* img, int rows, int cols) {
   Mat image(rows, cols, CV_8UC3, img);
 
   SiftFeatureDetector detector;
@@ -38,5 +46,41 @@ void draw_keypoints(unsigned char* img, int rows, int cols) {
 
   drawKeypoints(image, points, image, Scalar::all(-1),
       DrawMatchesFlags::DEFAULT);
+}
+
+void gval_extract_descriptor(void* img, int rows,
+    int cols, void** result, int* n_points, int* dim) {
+  Mat image(rows, cols, CV_8UC3, img);
+
+  SiftFeatureDetector detector;
+  std::vector<KeyPoint> points;
+  detector.detect(image, points);
+  
+  SiftDescriptorExtractor extractor;
+  Mat descriptor;
+  extractor.compute(image, points, descriptor);
+
+  assert(descriptor.channels() == 1 
+      && descriptor.depth() == CV_32F
+      && descriptor.elemSize() == sizeof(float));
+  gval_mat2bytes(descriptor, result, n_points, dim);
+}
+
+void gval_mat2bytes(Mat& matrix, void** result,
+    int* rows, int* cols) {
+  assert(matrix.channels() == 1);
+
+  *rows = matrix.size().height;
+  *cols = matrix.size().width;
+  size_t size = matrix.size().height * matrix.size().width
+    * matrix.elemSize();
+  *result = malloc(size);
+
+  if (!matrix.isContinuous()) {
+    matrix = matrix.clone();
+    assert(matrix.isContinuous());
+  }
+
+  memcpy(*result, matrix.data, size);
 }
 
