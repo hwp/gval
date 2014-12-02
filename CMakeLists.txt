@@ -18,15 +18,16 @@ add_definitions(-DPACKAGE_NAME="${PACKAGE_NAME}")
 add_definitions(-DVERSION="${PACKAGE_VERSION}")
 add_definitions(-DGST_PACKAGE_ORIGIN="${PACKAGE_URL}")
 
-find_package(GStreamer REQUIRED audio)
+find_package(GStreamer REQUIRED audio video)
 include_directories(${GSTREAMER_INCLUDE_DIRS} 
   ${GSTREAMER_BASE_INCLUDE_DIRS}
-  ${GSTREAMER_AUDIO_INCLUDE_DIRS})
+  ${GSTREAMER_AUDIO_INCLUDE_DIRS}
+  ${GSTREAMER_VIDEO_INCLUDE_DIRS})
 
 find_package(GLIB REQUIRED COMPONENTS gobject)
 include_directories(${GLIB_INCLUDE_DIRS})
 
-pkg_check_modules(OPENCV REQUIRED opencv)
+find_package(OpenCV REQUIRED)
 include_directories(${OPENCV_INCLUDE_DIRS})
 
 pkg_check_modules(FFTW REQUIRED fftw3)

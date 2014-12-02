@@ -10,11 +10,11 @@ target_link_libraries(gval
   ${GSTREAMER_AUDIO_LIBRARIES}
   ${GSTREAMER_VIDEO_LIBRARIES}
   ${FFTW_LIBRARIES}
-  ${OPENCV_LIBRARIES})
+  ${OpenCV_LIBS})
 
 install(TARGETS gval
   LIBRARY DESTINATION lib/gstreamer-1.0)
 
 add_executable(display display_image.cpp)
-target_link_libraries(display ${OPENCV_LIBRARIES})
+target_link_libraries(display ${OpenCV_LIBS})
 

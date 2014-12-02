@@ -27,9 +27,6 @@
 #include <math.h>
 #include <gst/gst.h>
 
-GST_DEBUG_CATEGORY_STATIC(gval_stft_debug);
-#define GST_CAT_DEFAULT gval_stft_debug
-
 #define MIN_WINDOW_SIZE 4
 #define MAX_WINDOW_SIZE 65536
 #define DEFAULT_WINDOW_SIZE 1024
