@@ -24,8 +24,11 @@
 #include "gval_utils.h"
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <math.h>
 #include <assert.h>
+#include <signal.h>
+#include <string.h>
 
 #include <fftw3.h>
 
@@ -123,5 +126,42 @@ void gval_mfcc(double* result, const double* signal,
 
   fftw_destroy_plan(plan);
   fftw_free(buf);
+}
+
+void gval_sigaction(int signum, siginfo_t* siginfo,
+    void* context) {
+  fprintf(stderr, "Signal Catched (No: %d, Code: %d)\n",
+      siginfo->si_signo, siginfo->si_code);
+  fprintf(stderr, "Debug with gdb, run: gdb -p %d\n",
+      siginfo->si_pid);
+  pid_t pid = fork();
+  if (pid == -1) {
+    perror("fork");
+    exit(2);
+  }
+  else if (pid) {
+    char s[13];
+    sprintf(s, "%d", pid);
+    execlp("gdb", "gdb", "-p", s, NULL);
+  } else {
+    setpgid(0, getpid());
+    kill(getpid(), SIGSTOP);
+  }
+}
+
+void gval_debug_init(void) {
+#ifndef NDEBUG
+  struct sigaction act;
+  memset(&act, '\0', sizeof(act));
+  act.sa_flags = SA_SIGINFO;
+  act.sa_sigaction = gval_sigaction;
+
+  if (sigaction(SIGINT, &act, NULL) < 0
+      || sigaction(SIGABRT, &act, NULL) < 0
+      || sigaction(SIGSEGV, &act, NULL) < 0) {  
+    perror ("sigaction");  
+    exit(2);  
+  }  
+#endif // NDEBUG
 }
 

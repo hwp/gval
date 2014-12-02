@@ -24,7 +24,8 @@
 #ifndef GVAL_UTILS_H_
 #define GVAL_UTILS_H_
 
-typedef double (*window_func_t)(unsigned int index, unsigned int wsize);
+typedef double (*window_func_t)(unsigned int index,
+    unsigned int wsize);
 
 double gval_hann_window(unsigned int index, unsigned int wsize);
 
@@ -34,6 +35,8 @@ void gval_spectrum(double* result, const double* signal,
 void gval_mfcc(double* result, const double* signal,
     unsigned int size, unsigned int n_channels,
     unsigned int spl_rate, window_func_t window);
+
+void gval_debug_init(void);
 
 #endif  // GVAL_UTILS_H_
 

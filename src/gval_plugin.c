@@ -25,12 +25,15 @@
 #  include <config.h>
 #endif
 
+#include "gval_utils.h"
 #include "gval_stft.h"
 #include "gval_mfcc.h"
 #include "gval_keypoints.h"
 #include "gval_sift.h"
       
 static gboolean plugin_init(GstPlugin* plugin) {
+  gval_debug_init();
+
   gboolean ret 
     = gst_element_register(plugin, "stft", GST_RANK_NONE,
       GVAL_TYPE_STFT);
