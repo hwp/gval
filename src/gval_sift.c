@@ -22,6 +22,7 @@
  */
 
 #include "gval_sift.h"
+#include "gval_utils.h"
 #include "gval_cv.hpp"
 
 #include <gst/gst.h>
@@ -205,8 +206,8 @@ static GstFlowReturn gval_sift_transform_frame_ip(GstVideoFilter* filter,
       printf("Descriptors (dim %d) of %d key points extracted.\n", dim, n_points);
     }
 
-    fwrite(descriptor, sizeof(float), n_points * dim,
-        this->out);
+    gval_write_matrix(descriptor, sizeof(float),
+        n_points, dim, this->out);
     free(descriptor);
   }
 

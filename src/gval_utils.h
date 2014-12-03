@@ -24,6 +24,8 @@
 #ifndef GVAL_UTILS_H_
 #define GVAL_UTILS_H_
 
+#include <stdio.h>
+
 typedef double (*window_func_t)(unsigned int index,
     unsigned int wsize);
 
@@ -37,6 +39,16 @@ void gval_mfcc(double* result, const double* signal,
     unsigned int spl_rate, window_func_t window);
 
 void gval_debug_init(void);
+
+void gval_write_matrix(void* ptr, size_t elem_size,
+    size_t rows, size_t cols, FILE* stream);
+
+/**
+ * Memory of ptr will be allocated with calloc().
+ * ptr should be freed using free() after use.
+ */
+void gval_read_matrix(void** ptr, size_t* elem_size,
+    size_t* rows, size_t* cols, FILE* stream);
 
 #endif  // GVAL_UTILS_H_
 
