@@ -29,6 +29,8 @@
 #include <gst/video/gstvideofilter.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 /* prototypes */
 
@@ -188,9 +190,9 @@ static GstFlowReturn gval_sift_transform_frame_ip(GstVideoFilter* filter,
     if (!this->out) {
       this->out = fopen(this->location, "w");
     }
-    g_assert(this->out);
+    assert(this->out);
 
-    void* descriptor;
+    void* descriptor = NULL;
     int n_points;
     int dim;
     gval_extract_descriptor(
@@ -205,6 +207,7 @@ static GstFlowReturn gval_sift_transform_frame_ip(GstVideoFilter* filter,
 
     fwrite(descriptor, sizeof(float), n_points * dim,
         this->out);
+    free(descriptor);
   }
 
   return GST_FLOW_OK;

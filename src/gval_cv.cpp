@@ -27,6 +27,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 
+#include <stdlib.h>
 #include <assert.h>
 
 using namespace cv;
@@ -56,14 +57,20 @@ void gval_extract_descriptor(void* img, int rows,
   std::vector<KeyPoint> points;
   detector.detect(image, points);
   
-  SiftDescriptorExtractor extractor;
-  Mat descriptor;
-  extractor.compute(image, points, descriptor);
+  if (points.size() > 0) {
+    SiftDescriptorExtractor extractor;
+    Mat descriptor;
+    extractor.compute(image, points, descriptor);
 
-  assert(descriptor.channels() == 1 
-      && descriptor.depth() == CV_32F
-      && descriptor.elemSize() == sizeof(float));
-  gval_mat2bytes(descriptor, result, n_points, dim);
+    assert(descriptor.channels() == 1 
+        && descriptor.depth() == CV_32F
+        && descriptor.elemSize() == sizeof(float));
+    gval_mat2bytes(descriptor, result, n_points, dim);
+  }
+  else {
+    *n_points = 0;
+    *dim = 0;
+  }
 }
 
 void gval_mat2bytes(Mat& matrix, void** result,

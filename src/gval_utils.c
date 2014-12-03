@@ -132,8 +132,7 @@ void gval_sigaction(int signum, siginfo_t* siginfo,
     void* context) {
   fprintf(stderr, "Signal Catched (No: %d, Code: %d)\n",
       siginfo->si_signo, siginfo->si_code);
-  fprintf(stderr, "Debug with gdb, run: gdb -p %d\n",
-      siginfo->si_pid);
+  fprintf(stderr, "Attach to GDB\n");
   pid_t pid = fork();
   if (pid == -1) {
     perror("fork");
@@ -145,7 +144,7 @@ void gval_sigaction(int signum, siginfo_t* siginfo,
     execlp("gdb", "gdb", "-p", s, NULL);
   } else {
     setpgid(0, getpid());
-    kill(getpid(), SIGSTOP);
+    raise(SIGSTOP);
   }
 }
 
