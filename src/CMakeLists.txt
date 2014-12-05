@@ -18,3 +18,6 @@ install(TARGETS gval
 add_executable(display display_image.cpp)
 target_link_libraries(display ${OpenCV_LIBS})
 
+add_executable(matwr_test matwr_test.cpp gval_cv.cpp gval_utils.c)
+target_link_libraries(matwr_test ${OpenCV_LIBS} ${FFTW_LIBRARIES})
+

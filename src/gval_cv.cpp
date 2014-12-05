@@ -110,7 +110,6 @@ void* gval_read_cvmat(FILE* stream) {
   assert(ret == rows * cols);
 
   Mat* m = new Mat(rows, cols, type, data);
-  free(data);
   return m;
 }
 
