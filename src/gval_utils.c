@@ -164,31 +164,3 @@ void gval_debug_init(void) {
 #endif // NDEBUG
 }
 
-void gval_write_matrix(void* ptr, size_t elem_size,
-    size_t rows, size_t cols, FILE* stream) {
-  size_t ret;
-  ret = fwrite(&elem_size, sizeof(size_t), 1, stream);
-  assert(ret == 1);
-  ret = fwrite(&rows, sizeof(size_t), 1, stream);
-  assert(ret == 1);
-  ret = fwrite(&cols, sizeof(size_t), 1, stream);
-  assert(ret == 1);
-  ret = fwrite(ptr, elem_size, rows * cols, stream);
-  assert(ret == rows * cols);
-}
-
-void gval_read_matrix(void** ptr, size_t* elem_size,
-    size_t* rows, size_t* cols, FILE* stream) {
-  size_t ret;
-  ret = fread(elem_size, sizeof(size_t), 1, stream);
-  assert(ret == sizeof(size_t));
-  ret = fread(rows, sizeof(size_t), 1, stream);
-  assert(ret == sizeof(size_t));
-  ret = fread(cols, sizeof(size_t), 1, stream);
-  assert(ret == sizeof(size_t));
-  size_t size = *rows * *cols;
-  *ptr = calloc(size, *elem_size);
-  ret = fread(*ptr, *elem_size, size, stream);
-  assert(ret == size);
-}
-

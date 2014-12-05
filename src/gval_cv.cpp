@@ -32,12 +32,6 @@
 
 using namespace cv;
 
-/**
- * single channel matrix
- */
-void gval_mat2bytes(Mat& matrix, void** result,
-    int* rows, int* cols);
-
 void gval_draw_keypoints(void* img, int rows, int cols) {
   Mat image(rows, cols, CV_8UC3, img);
 
@@ -57,37 +51,70 @@ void gval_extract_descriptor(void* img, int rows,
   std::vector<KeyPoint> points;
   detector.detect(image, points);
   
-  if (points.size() > 0) {
-    SiftDescriptorExtractor extractor;
-    Mat descriptor;
-    extractor.compute(image, points, descriptor);
+  SiftDescriptorExtractor extractor;
+  Mat* descriptor = new Mat();
+  extractor.compute(image, points, *descriptor);
 
-    assert(descriptor.channels() == 1 
-        && descriptor.depth() == CV_32F
-        && descriptor.elemSize() == sizeof(float));
-    gval_mat2bytes(descriptor, result, n_points, dim);
-  }
-  else {
-    *n_points = 0;
-    *dim = 0;
-  }
+  *n_points = descriptor->rows;
+  *dim = descriptor->cols;
+  assert(*n_points >= 0 && *dim >= 0);
+  *result = descriptor;
 }
 
-void gval_mat2bytes(Mat& matrix, void** result,
-    int* rows, int* cols) {
-  assert(matrix.channels() == 1);
-
-  *rows = matrix.size().height;
-  *cols = matrix.size().width;
-  size_t size = matrix.size().height * matrix.size().width
-    * matrix.elemSize();
-  *result = malloc(size);
-
-  if (!matrix.isContinuous()) {
-    matrix = matrix.clone();
-    assert(matrix.isContinuous());
+void gval_write_cvmat(const void* matrix, FILE* stream) {
+  Mat m = *(Mat*) matrix;
+  assert(m.dims == 2);
+  if (!m.isContinuous()) {
+    m = m.clone();
+    assert(m.isContinuous());
   }
 
-  memcpy(*result, matrix.data, size);
+  int type = m.type();
+  int rows = m.rows;
+  int cols = m.cols;
+  assert(m.total() == rows * cols);
+  int elem_size = m.elemSize();
+  void* data = m.data;
+
+  size_t ret;
+  ret = fwrite(&type, sizeof(type), 1, stream);
+  assert(ret == 1);
+  ret = fwrite(&rows, sizeof(rows), 1, stream);
+  assert(ret == 1);
+  ret = fwrite(&cols, sizeof(cols), 1, stream);
+  assert(ret == 1);
+  ret = fwrite(&elem_size, sizeof(elem_size), 1, stream);
+  assert(ret == 1);
+  ret = fwrite(data, elem_size, rows * cols, stream);
+  assert(ret == rows * cols);
+}
+
+void* gval_read_cvmat(FILE* stream) {
+  int type, rows, cols, elem_size;
+  void* data;
+
+  size_t ret;
+  ret = fread(&type, sizeof(type), 1, stream);
+  if (ret == 0 && feof(stream)) {
+    return NULL;
+  }
+  assert(ret == 1);
+  ret = fread(&rows, sizeof(rows), 1, stream);
+  assert(ret == 1);
+  ret = fread(&cols, sizeof(cols), 1, stream);
+  assert(ret == 1);
+  ret = fread(&elem_size, sizeof(elem_size), 1, stream);
+  assert(ret == 1);
+  data = malloc(elem_size * rows * cols);
+  ret = fread(data, elem_size, rows * cols, stream);
+  assert(ret == rows * cols);
+
+  Mat* m = new Mat(rows, cols, type, data);
+  free(data);
+  return m;
+}
+
+void gval_free_cvmat(void* matrix) {
+  delete (Mat*) matrix;
 }
 

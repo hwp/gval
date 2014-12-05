@@ -30,6 +30,8 @@
 #define EXTERNC
 #endif
 
+#include <stdio.h>
+
 /**
  * Find SIFT keypoints and draw on the image.
  * The raw data should be in 8-bit RGB format.
@@ -41,12 +43,31 @@ void gval_draw_keypoints(void* img, int rows, int cols);
  * Extract SIFT descriptors.
  * The raw data should be in 8-bit RGB format.
  *
- * The data type of result is float (32-bit).
- * The result is should be freed using free();
+ * result is a pointer to C++ Class cv::Mat.
+ * It should be freed using gval_free_cvmat().
  */
 EXTERNC
 void gval_extract_descriptor(void* img, int rows,
     int cols, void** result, int* n_points, int* dim);
+
+/**
+ * Write a cv::Mat to stream.
+ */
+EXTERNC
+void gval_write_cvmat(const void* matrix, FILE* stream);
+
+/**
+ * Read a cv::Mat from stream.
+ * The returned matrix should be freed using gval_free_cvmat().
+ */
+EXTERNC
+void* gval_read_cvmat(FILE* stream);
+
+/**
+ * Free a cv::Mat.
+ */
+EXTERNC
+void gval_free_cvmat(void* matrix);
 
 #undef EXTERNC
 
