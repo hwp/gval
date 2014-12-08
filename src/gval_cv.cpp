@@ -63,18 +63,23 @@ void gval_extract_descriptor(void* img, int rows,
 
 void gval_write_cvmat(const void* matrix, FILE* stream) {
   Mat m = *(Mat*) matrix;
-  assert(m.dims == 2);
-  if (!m.isContinuous()) {
-    m = m.clone();
-    assert(m.isContinuous());
-  }
 
   int type = m.type();
   int rows = m.rows;
   int cols = m.cols;
-  assert(m.total() == rows * cols);
   int elem_size = m.elemSize();
-  void* data = m.data;
+  void* data = NULL;
+
+  if (m.rows > 0 && m.cols > 0) {
+    assert(m.dims == 2);
+    if (!m.isContinuous()) {
+      m = m.clone();
+      assert(m.isContinuous());
+    }
+
+    assert(m.total() == rows * cols);
+    data = m.data;
+  }
 
   size_t ret;
   ret = fwrite(&type, sizeof(type), 1, stream);
@@ -85,8 +90,10 @@ void gval_write_cvmat(const void* matrix, FILE* stream) {
   assert(ret == 1);
   ret = fwrite(&elem_size, sizeof(elem_size), 1, stream);
   assert(ret == 1);
-  ret = fwrite(data, elem_size, rows * cols, stream);
-  assert(ret == rows * cols);
+  if (data) {
+    ret = fwrite(data, elem_size, rows * cols, stream);
+    assert(ret == rows * cols);
+  }
 }
 
 void* gval_read_cvmat(FILE* stream) {
