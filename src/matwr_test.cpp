@@ -40,11 +40,11 @@ using cv::Mat;
 int main(int argc, char** argv) {
   gval_debug_init();
 
-  for (int k = 0; k < 100000; k++) {
+  for (int k = 0; k < 100; k++) {
     Mat m(ROWS, COLS, CV_32FC1);
     for (int i = 0; i < ROWS; i++) {
       for (int j = 0; j < COLS; j++) {
-        m.at<float>(i, j) = ELEMENT(i, j);
+        m.at<float>(i, j) = k * ELEMENT(i, j);
       }
     }
 
@@ -82,8 +82,6 @@ int main(int argc, char** argv) {
       abort();
     }
   }
-
-  // memory leak
 
   return 0;
 }
