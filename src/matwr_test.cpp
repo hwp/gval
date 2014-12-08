@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
           }
         }
       }
+      gval_free_cvmat(ret);
     }
     fclose(in);
 
