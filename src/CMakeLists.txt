@@ -21,3 +21,7 @@ target_link_libraries(display ${OpenCV_LIBS})
 add_executable(matwr_test matwr_test.cpp gval_cv.cpp gval_utils.c)
 target_link_libraries(matwr_test ${OpenCV_LIBS} ${FFTW_LIBRARIES})
 
+add_executable(build_voc build_voc.cpp gval_cv.cpp gval_utils.c)
+target_link_libraries(build_voc ${OpenCV_LIBS} ${FFTW_LIBRARIES}
+  ${Boost_LIBRARIES})
+

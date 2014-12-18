@@ -121,6 +121,10 @@ void* gval_read_cvmat(FILE* stream) {
 }
 
 void gval_free_cvmat(void* matrix) {
+  if (matrix == NULL) {
+    return;
+  }
+
   Mat* mat = (Mat*) matrix;
   if (mat->refcount == NULL) {
     free(mat->data);

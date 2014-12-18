@@ -58,7 +58,8 @@ void gval_write_cvmat(const void* matrix, FILE* stream);
 
 /**
  * Read a cv::Mat from stream.
- * The returned matrix should be freed using gval_free_cvmat().
+ * @return the matrix or NULL if EOF
+ * @warning The returned matrix should be freed using gval_free_cvmat().
  */
 EXTERNC
 void* gval_read_cvmat(FILE* stream);

@@ -28,7 +28,10 @@ find_package(GLIB REQUIRED COMPONENTS gobject)
 include_directories(${GLIB_INCLUDE_DIRS})
 
 find_package(OpenCV REQUIRED)
-include_directories(${OPENCV_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+find_package(Boost REQUIRED system filesystem)
+include_directories(${Boost_INCLUDE_DIRS})
 
 pkg_check_modules(FFTW REQUIRED fftw3)
 include_directories(${FFTW_INCLUDE_DIRS})

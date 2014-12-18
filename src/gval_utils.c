@@ -132,7 +132,8 @@ void gval_sigaction(int signum, siginfo_t* siginfo,
     void* context) {
   fprintf(stderr, "Signal Catched (No: %d, Code: %d)\n",
       siginfo->si_signo, siginfo->si_code);
-  fprintf(stderr, "Attach to GDB\n");
+  fprintf(stderr, "Type any key to attach to GDB\n");
+  getchar();
   pid_t pid = fork();
   if (pid == -1) {
     perror("fork");
@@ -155,8 +156,7 @@ void gval_debug_init(void) {
   act.sa_flags = SA_SIGINFO;
   act.sa_sigaction = gval_sigaction;
 
-  if (sigaction(SIGINT, &act, NULL) < 0
-      || sigaction(SIGABRT, &act, NULL) < 0
+  if (sigaction(SIGABRT, &act, NULL) < 0
       || sigaction(SIGSEGV, &act, NULL) < 0) {  
     perror ("sigaction");  
     exit(2);  
