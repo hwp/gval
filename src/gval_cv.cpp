@@ -146,6 +146,8 @@ void* gval_load_bow(const char* voc_file) {
 
   bow->setVocabulary(voc->clone());
   gval_free_cvmat(voc);
+
+  return bow;
 }
 
 void gval_free_bow(void* bow) {
@@ -169,13 +171,13 @@ void* gval_bow_extract(void* img, int rows, int cols,
 
   assert(hist.rows == 1);
   assert(hist.cols == extractor.getVocabulary().rows);
-  assert(hist.type() == CV_64F);
+  assert(hist.type() == CV_32F);
 
   *dim = hist.cols;
   *result = (double*) malloc(sizeof(double) * *dim);
   
   for (int i = 0; i < *dim; i++) {
-    (*result)[i] = hist.at<double>(i);
+    (*result)[i] = hist.at<float>(i);
   }
 }
 
