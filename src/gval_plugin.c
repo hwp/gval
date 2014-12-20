@@ -30,6 +30,7 @@
 #include "gval_mfcc.h"
 #include "gval_keypoints.h"
 #include "gval_sift.h"
+#include "gval_bow.h"
       
 static gboolean plugin_init(GstPlugin* plugin) {
   gval_debug_init();
@@ -43,6 +44,8 @@ static gboolean plugin_init(GstPlugin* plugin) {
       GST_RANK_NONE, GVAL_TYPE_KEYPOINTS) && ret;
   ret = gst_element_register(plugin, "mfcc",
       GST_RANK_NONE, GVAL_TYPE_MFCC) && ret;
+  ret = gst_element_register(plugin, "bow",
+      GST_RANK_NONE, GVAL_TYPE_BOW) && ret;
 
   return ret;
 }

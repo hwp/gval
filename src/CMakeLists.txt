@@ -3,7 +3,7 @@
 
 add_library(gval SHARED 
   gval_plugin.c gval_utils.c gval_cv.cpp gval_stft.c
-  gval_mfcc.c gval_keypoints.c gval_sift.c)
+  gval_mfcc.c gval_keypoints.c gval_sift.c gval_bow.c)
 target_link_libraries(gval
   ${GSTREAMER_LIBRARIES}
   ${GSTREAMER_BASE_LIBRARIES}

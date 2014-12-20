@@ -70,6 +70,32 @@ void* gval_read_cvmat(FILE* stream);
 EXTERNC
 void gval_free_cvmat(void* matrix);
 
+/**
+ * Load a Bag-of-Words feature extractor from
+ * a vocabulary file.
+ *
+ * the returned pointer should be freed using gval_free_bow()
+ */
+EXTERNC
+void* gval_load_bow(const char* voc_file);
+
+/**
+ * Free a cv::BOWImgDescriptorExtractor
+ */
+EXTERNC
+void gval_free_bow(void* bow);
+
+/**
+ * Extract BoW feature.
+ * The raw data should be in 8-bit RGB format.
+ * 
+ * result is a double array.
+ * It should be freed using free().
+ */
+EXTERNC
+void* gval_bow_extract(void* img, int rows, int cols,
+    void* bow, double** result, int* dim);
+
 #undef EXTERNC
 
 #endif  // GVAL_CV_HPP_

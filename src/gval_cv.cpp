@@ -133,3 +133,49 @@ void gval_free_cvmat(void* matrix) {
   delete mat;
 }
 
+void* gval_load_bow(const char* voc_file) {
+  FILE* in = fopen(voc_file, "r");
+  assert(in);
+  Mat* voc = (Mat*) gval_read_cvmat(in);
+  fclose(in);
+
+  Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
+  Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor); 
+  BOWImgDescriptorExtractor* bow 
+    = new BOWImgDescriptorExtractor(extractor, matcher);
+
+  bow->setVocabulary(voc->clone());
+  gval_free_cvmat(voc);
+}
+
+void gval_free_bow(void* bow) {
+  if (bow) {
+    delete (BOWImgDescriptorExtractor*) bow;
+  }
+}
+
+void* gval_bow_extract(void* img, int rows, int cols,
+    void* bow, double** result, int* dim) {
+  Mat image(rows, cols, CV_8UC3, img);
+  BOWImgDescriptorExtractor extractor 
+    = *(BOWImgDescriptorExtractor*) bow;
+
+  SiftFeatureDetector detector;
+  std::vector<KeyPoint> points;
+  detector.detect(image, points);
+  
+  Mat hist;
+  extractor.compute(image, points, hist);
+
+  assert(hist.rows == 1);
+  assert(hist.cols == extractor.getVocabulary().rows);
+  assert(hist.type() == CV_64F);
+
+  *dim = hist.cols;
+  *result = (double*) malloc(sizeof(double) * *dim);
+  
+  for (int i = 0; i < *dim; i++) {
+    (*result)[i] = hist.at<double>(i);
+  }
+}
+
