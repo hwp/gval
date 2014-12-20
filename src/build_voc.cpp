@@ -101,11 +101,15 @@ int main(int argc, char** argv) {
     }
   }
 
+  fprintf(stderr, "Clustering (%d descriptors, %d clusters)...",
+      bow.descripotorsCount(), n_cluster);
   Mat voc = bow.cluster();
+  fprintf(stderr, " Done\n");
   FILE* out = fopen(argv[optind + 1], "w");
   assert(out);
   gval_write_cvmat(&voc, out);
   fclose(out);
+  fprintf(stderr, "Written to %s\n", argv[optind + 1]);
 
   return EXIT_SUCCESS;
 }
