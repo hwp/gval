@@ -170,7 +170,7 @@ void* gval_bow_extract(void* img, int rows, int cols,
   extractor.compute(image, points, hist);
 
   assert(hist.rows == 1);
-  assert(hist.cols == extractor.getVocabulary().rows);
+  assert(hist.cols == extractor.descriptorSize());
   assert(hist.type() == CV_32F);
 
   *dim = hist.cols;
