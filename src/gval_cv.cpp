@@ -162,22 +162,29 @@ void* gval_bow_extract(void* img, int rows, int cols,
   BOWImgDescriptorExtractor extractor 
     = *(BOWImgDescriptorExtractor*) bow;
 
+  *dim = extractor.descriptorSize();
+  *result = (double*) malloc(sizeof(double) * *dim);
+
   SiftFeatureDetector detector;
   std::vector<KeyPoint> points;
   detector.detect(image, points);
   
-  Mat hist;
-  extractor.compute(image, points, hist);
+  if (!points.empty()) {
+    Mat hist;
+    extractor.compute(image, points, hist);
 
-  assert(hist.rows == 1);
-  assert(hist.cols == extractor.descriptorSize());
-  assert(hist.type() == CV_32F);
+    assert(hist.rows == 1);
+    assert(hist.cols == extractor.descriptorSize());
+    assert(hist.type() == CV_32F);
 
-  *dim = hist.cols;
-  *result = (double*) malloc(sizeof(double) * *dim);
-  
-  for (int i = 0; i < *dim; i++) {
-    (*result)[i] = hist.at<float>(i);
+    for (int i = 0; i < *dim; i++) {
+      (*result)[i] = hist.at<float>(i);
+    }
+  }
+  else {
+    for (int i = 0; i < *dim; i++) {
+      (*result)[i] = 0.0;
+    }
   }
 }
 
