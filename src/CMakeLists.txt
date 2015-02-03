@@ -28,5 +28,7 @@ target_link_libraries(build_voc ${OpenCV_LIBS} ${FFTW_LIBRARIES}
 add_executable(gval_voc_size gval_voc_size.cpp gval_cv.cpp)
 target_link_libraries(gval_voc_size ${OpenCV_LIBS})
 
-install(TARGETS gval_voc_size DESTINATION bin) 
+add_executable(gval_merge gval_merge.c)
 
+install(TARGETS gval_voc_size gval_merge
+  DESTINATION bin) 
