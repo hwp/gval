@@ -58,6 +58,7 @@ enum {
   PROP_0,
 
   PROP_SILENT,
+  PROP_FLUSH,
   PROP_WSIZE,
   PROP_SSIZE,
   PROP_N_CHANNELS,
@@ -121,6 +122,9 @@ static void gval_mfcc_class_init(GvalMfccClass* klass) {
   mfcc_props[PROP_SILENT] = g_param_spec_boolean(
       "silent", "Silent", "Produce verbose output ?",
       FALSE, G_PARAM_READWRITE);
+  mfcc_props[PROP_FLUSH] = g_param_spec_boolean(
+      "flush", "Flush", "Flush ouput stream immediately?",
+      FALSE, G_PARAM_READWRITE);
   mfcc_props[PROP_WSIZE] = g_param_spec_uint(
       "wsize", "Window Size", "Window Size of the FFT",
       MIN_WINDOW_SIZE, MAX_WINDOW_SIZE, DEFAULT_WINDOW_SIZE,
@@ -172,6 +176,7 @@ static void gval_mfcc_class_init(GvalMfccClass* klass) {
  */
 static void gval_mfcc_init(GvalMfcc* this) {
   this->silent = FALSE;
+  this->flush = FALSE;
   this->wsize = 0;
   this->ssize = 0;
   this->n_channels = 0;
@@ -202,6 +207,9 @@ static void gval_mfcc_set_property(GObject* object,
   switch (prop_id) {
     case PROP_SILENT:
       this->silent = g_value_get_boolean(value);
+      break;
+    case PROP_FLUSH:
+      this->flush = g_value_get_boolean(value);
       break;
     case PROP_WSIZE:
       this->wsize = g_value_get_uint(value);
@@ -234,6 +242,9 @@ static void gval_mfcc_get_property(GObject* object,
   switch (prop_id) {
     case PROP_SILENT:
       g_value_set_boolean(value, this->silent);
+      break;
+    case PROP_FLUSH:
+      g_value_set_boolean(value, this->flush);
       break;
     case PROP_WSIZE:
       g_value_set_uint(value, this->wsize);
@@ -316,6 +327,9 @@ static GstFlowReturn gval_mfcc_transform_ip(GstBaseTransform* trans,
           <= this->n_channels);
       fwrite(mfcc + this->cbegin, sizeof(double),
           this->csize, this->out);
+      if (this->flush) {
+        fflush(this->out);
+      }
     }
 
     g_free(mfcc);

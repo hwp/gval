@@ -49,6 +49,7 @@ enum {
   PROP_0,
 
   PROP_SILENT,
+  PROP_FLUSH,
   PROP_LOCATION,
   PROP_VOCABULARY,
   
@@ -96,6 +97,9 @@ static void gval_bow_class_init(GvalBowClass* klass) {
   bow_props[PROP_SILENT] = g_param_spec_boolean(
       "silent", "Silent", "Produce verbose output ?",
       FALSE, G_PARAM_READWRITE);
+  bow_props[PROP_FLUSH] = g_param_spec_boolean(
+      "flush", "Flush", "Flush ouput stream immediately?",
+      FALSE, G_PARAM_READWRITE);
   bow_props[PROP_LOCATION] = g_param_spec_string(
       "location", "Location", "Path to the output file",
       NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
@@ -115,6 +119,7 @@ static void gval_bow_class_init(GvalBowClass* klass) {
 
 static void gval_bow_init(GvalBow* this) {
   this->silent = FALSE;
+  this->flush = FALSE;
   this->location = NULL;
   this->vocabulary = NULL;
 
@@ -142,6 +147,9 @@ void gval_bow_set_property(GObject* object, guint prop_id,
     case PROP_SILENT:
       this->silent = g_value_get_boolean(value);
       break;
+    case PROP_FLUSH:
+      this->flush = g_value_get_boolean(value);
+      break;
     case PROP_LOCATION:
       this->location = g_value_dup_string(value);
       break;
@@ -161,6 +169,9 @@ void gval_bow_get_property(GObject* object,
   switch (prop_id) {
     case PROP_SILENT:
       g_value_set_boolean(value, this->silent);
+      break;
+    case PROP_FLUSH:
+      g_value_set_boolean(value, this->flush);
       break;
     case PROP_LOCATION:
       g_value_set_string(value, this->location);
@@ -224,6 +235,9 @@ static GstFlowReturn gval_bow_transform_frame_ip(GstVideoFilter* filter,
     }
 
     fwrite(descriptor, sizeof(double), dim, this->out);
+    if (this->flush) {
+      fflush(this->out);
+    }
     free(descriptor);
   }
 

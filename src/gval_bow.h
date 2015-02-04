@@ -45,6 +45,7 @@ typedef struct {
   GstVideoFilter base;
 
   gboolean silent;
+  gboolean flush;
   const gchar* location;
   const gchar* vocabulary;
 

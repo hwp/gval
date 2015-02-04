@@ -48,6 +48,7 @@ typedef struct {
   GstAudioFilter base;
 
   gboolean silent;
+  gboolean flush;
   guint wsize;
   guint ssize;
   guint n_channels;
