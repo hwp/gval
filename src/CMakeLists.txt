@@ -30,5 +30,7 @@ target_link_libraries(gval_voc_size ${OpenCV_LIBS})
 
 add_executable(gval_merge gval_merge.c)
 
-install(TARGETS gval_voc_size gval_merge
+add_executable(gval_sum gval_sum.c)
+
+install(TARGETS gval_voc_size gval_merge gval_sum
   DESTINATION bin) 
