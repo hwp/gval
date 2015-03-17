@@ -40,6 +40,11 @@ using boost::filesystem::directory_iterator;
 
 using cv::Mat;
 using cv::BOWKMeansTrainer;
+using cv::FlannBasedMatcher;
+using cv::DMatch;
+
+#include <vector>
+using std::vector;
 
 #define DESCRIPTORS_EXT ".desc"
 
@@ -105,11 +110,46 @@ int main(int argc, char** argv) {
       bow.descripotorsCount(), n_cluster);
   Mat voc = bow.cluster();
   fprintf(stderr, " Done\n");
+
+  fprintf(stderr, "Counting document frequency...");
+  int* dfcounter = (int*) calloc(n_cluster, sizeof(int));
+  vector<Mat> all = bow.getDescriptors();
+  FlannBasedMatcher matcher;
+  matcher.add(vector<Mat>(1, voc));
+  for (vector<Mat>::const_iterator it = all.begin();
+      it != all.end(); it++) {
+    vector<int> ct(n_cluster, 0);
+    vector<DMatch> matches;
+    matcher.match(*it, matches);
+    for (vector<DMatch>::const_iterator jt = matches.begin();
+        jt != matches.end(); jt++) {
+      assert(jt->trainIdx >= 0 && jt->trainIdx < n_cluster);
+      ct[jt->trainIdx] = 1;
+    }
+
+    for (int j = 0; j < n_cluster; j++) {
+      dfcounter[j] += ct[j];
+    }
+  }
+  int dtotal = all.size();
+  fprintf(stderr, " Done\n");
+
   FILE* out = fopen(argv[optind + 1], "w");
   assert(out);
   gval_write_cvmat(&voc, out);
+  fwrite(dfcounter, sizeof(int), n_cluster, out);
+  fwrite(&dtotal, sizeof(int), 1, out);
+
+  // debug
+  fprintf(stderr, "total:%d\n", dtotal);
+  for (int j = 0; j < n_cluster; j++) {
+    fprintf(stderr, "%d:%d\n", j, dfcounter[j]);
+  }
+
   fclose(out);
   fprintf(stderr, "Written to %s\n", argv[optind + 1]);
+
+  free(dfcounter);
 
   return EXIT_SUCCESS;
 }

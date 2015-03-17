@@ -133,10 +133,18 @@ void gval_free_cvmat(void* matrix) {
   delete mat;
 }
 
-void* gval_load_bow(const char* voc_file) {
+bow_t* gval_load_bow(const char* voc_file) {
+  bow_t* ret = (bow_t*) malloc(sizeof(bow_t));
+  assert(ret);
+
   FILE* in = fopen(voc_file, "r");
   assert(in);
   Mat* voc = (Mat*) gval_read_cvmat(in);
+  ret->size = bow->getVocabulary().rows;
+  ret->df = (int*) malloc(sizeof(int) * ret->size);
+  assert(ret->df);
+  fread(ret->df, sizeof(int), ret->size, in);
+  fread(&ret->dtotal, sizeof(int), 1, in);
   fclose(in);
 
   Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
@@ -147,20 +155,24 @@ void* gval_load_bow(const char* voc_file) {
   bow->setVocabulary(voc->clone());
   gval_free_cvmat(voc);
 
-  return bow;
+  ret->extractor = bow;
+
+  return ret;
 }
 
-void gval_free_bow(void* bow) {
+void gval_free_bow(bow_t* bow) {
   if (bow) {
-    delete (BOWImgDescriptorExtractor*) bow;
+    free(bow->df);
+    delete (BOWImgDescriptorExtractor*) bow->extractor;
+    free(bow);
   }
 }
 
-void* gval_bow_extract(void* img, int rows, int cols,
-    void* bow, double** result, int* dim) {
+void gval_bow_extract(void* img, int rows, int cols,
+    bow_t* bow, double** result, int* dim) {
   Mat image(rows, cols, CV_8UC3, img);
   BOWImgDescriptorExtractor extractor 
-    = *(BOWImgDescriptorExtractor*) bow;
+    = *(BOWImgDescriptorExtractor*) bow->extractor;
 
   *dim = extractor.descriptorSize();
   *result = (double*) malloc(sizeof(double) * *dim);
@@ -178,7 +190,8 @@ void* gval_bow_extract(void* img, int rows, int cols,
     assert(hist.type() == CV_32F);
 
     for (int i = 0; i < *dim; i++) {
-      (*result)[i] = hist.at<float>(i);
+      (*result)[i] = hist.at<float>(i) 
+        * log((double) bow->dtotal / (double) bow->df[i]);
     }
   }
   else {

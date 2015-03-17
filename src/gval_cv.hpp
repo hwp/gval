@@ -32,6 +32,13 @@
 
 #include <stdio.h>
 
+typedef struct {
+  int size;
+  int dtotal;       // number of documents
+  int* df;          // document frequency
+  void* extractor;
+} bow_t;
+
 /**
  * Find SIFT keypoints and draw on the image.
  * The raw data should be in 8-bit RGB format.
@@ -77,13 +84,13 @@ void gval_free_cvmat(void* matrix);
  * the returned pointer should be freed using gval_free_bow()
  */
 EXTERNC
-void* gval_load_bow(const char* voc_file);
+bow_t* gval_load_bow(const char* voc_file);
 
 /**
  * Free a cv::BOWImgDescriptorExtractor
  */
 EXTERNC
-void gval_free_bow(void* bow);
+void gval_free_bow(bow_t* bow);
 
 /**
  * Extract BoW feature.
@@ -93,8 +100,8 @@ void gval_free_bow(void* bow);
  * It should be freed using free().
  */
 EXTERNC
-void* gval_bow_extract(void* img, int rows, int cols,
-    void* bow, double** result, int* dim);
+void gval_bow_extract(void* img, int rows, int cols,
+    bow_t* bow, double** result, int* dim);
 
 #undef EXTERNC
 

@@ -24,6 +24,8 @@
 #ifndef GVAL_BOW_H_
 #define GVAL_BOW_H_
 
+#include "gval_cv.hpp"
+
 #include <stdio.h>
 
 #include <gst/video/video.h>
@@ -50,7 +52,7 @@ typedef struct {
   const gchar* vocabulary;
 
   FILE* out;
-  void* bow;
+  bow_t* bow;
 } GvalBow;
 
 typedef struct {
