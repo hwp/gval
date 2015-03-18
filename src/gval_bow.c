@@ -233,13 +233,14 @@ static GstFlowReturn gval_bow_transform_frame_ip(GstVideoFilter* filter,
     }
     assert(this->bow);
 
-    double* descriptor = NULL;
-    int dim;
+    int dim = this->bow->size - this->nstop;
+    double* descriptor = malloc(sizeof(double) * dim);
+    assert(descriptor);
     gval_bow_extract(
         GST_VIDEO_FRAME_PLANE_DATA(frame, 0),
         GST_VIDEO_FRAME_HEIGHT(frame),
         GST_VIDEO_FRAME_WIDTH(frame), 
-        this->bow, this->nstop, &descriptor, &dim);
+        this->bow, this->nstop, descriptor, dim);
 
     if (!this->silent) {
       printf("Image descriptor (dim %d) extracted.\n", dim);

@@ -33,7 +33,7 @@
 #include <stdio.h>
 
 typedef struct {
-  int size;
+  int size;         // size of vocabulary
   int dtotal;       // number of documents
   int* df;          // document frequency
   int* rank;        // rank of df
@@ -97,12 +97,11 @@ void gval_free_bow(bow_t* bow);
  * Extract BoW feature.
  * The raw data should be in 8-bit RGB format.
  * 
- * result is a double array.
- * It should be freed using free().
+ * result is a double array which is allocated in advance.
  */
 EXTERNC
 void gval_bow_extract(void* img, int rows, int cols,
-    bow_t* bow, int nstop, double** result, int* dim);
+    bow_t* bow, int nstop, double* result, int dim);
 
 #undef EXTERNC
 

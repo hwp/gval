@@ -195,17 +195,27 @@ void gval_free_bow(bow_t* bow) {
   }
 }
 
+Scalar gen_color(double hue) {
+  double g = fmax(1 - fabs(hue - 1.0 / 3.0), 0);
+  double b = fmax(1 - fabs(hue - 2.0 / 3.0), 0);
+
+  if (hue > 2.0 / 3.0) {
+    hue -= 1.0;
+  }
+  double r = fmax(1 - fabs(hue), 0);
+
+  return Scalar(255 * r, 255 * g, 255 * b);
+}
+
 void gval_bow_extract(void* img, int rows, int cols,
-    bow_t* bow, int nstop, double** result, int* dim) {
+    bow_t* bow, int nstop, double* result, int dim) {
   Mat image(rows, cols, CV_8UC3, img);
   BOWImgDescriptorExtractor extractor 
     = *(BOWImgDescriptorExtractor*) bow->extractor;
 
   int dsize = extractor.descriptorSize();
-  *dim = dsize - nstop;
-  assert(*dim > 0);
+  assert(dim == dsize - nstop);
 
-  *result = (double*) malloc(sizeof(double) * *dim);
 
   SiftFeatureDetector detector;
   std::vector<KeyPoint> points;
@@ -213,32 +223,56 @@ void gval_bow_extract(void* img, int rows, int cols,
   
   if (!points.empty()) {
     Mat hist;
-    extractor.compute(image, points, hist);
+    vector<vector<int> > pids;
+    extractor.compute(image, points, hist, &pids);
 
     assert(hist.rows == 1);
     assert(hist.cols == dsize);
     assert(hist.type() == CV_32F);
+    assert(pids.size() == dsize);
 
     int c = 0;
     double sum = 0.0;
     for (int i = 0; i < dsize; i++) {
       if (bow->rank[i] >= nstop) {
-        (*result)[c] = hist.at<float>(i)
+        result[c] = hist.at<float>(i)
           * log((double) bow->dtotal / (double) bow->df[i]);
-        sum += (*result)[c] * (*result)[c];
+        sum += result[c] * result[c];
         c++;
       }
     }
-    assert(c == *dim);
+    assert(c == dim);
 
     sum = sqrt(sum);
-    for (int i = 0; i < *dim; i++) {
-      (*result)[c] /= sum;
+    if (sum > 0.0) {
+      for (int i = 0; i < dim; i++) {
+        result[i] /= sum;
+      }
+    }
+
+    for (int i = 0; i < dsize; i++) {
+      if (bow->rank[i] >= nstop) {
+        Scalar color = gen_color((double) i / (double) dsize);
+        for (std::vector<int>::const_iterator it = pids[i].begin(); it != pids[i].end(); it++) {
+          KeyPoint p = points[*it];
+          RotatedRect rRect(p.pt, Size2f(2.0 * p.size, 2.0* p.size), p.angle);
+          Point2f vertices[4];
+          rRect.points(vertices);
+          for (int i = 0; i < 4; i++) {
+            line(image, vertices[i], vertices[(i + 1) % 4], color);
+          }
+
+          Point2f index = p.pt;
+          index.x += p.size * cos(p.angle / 180.0 * M_PI);
+          index.y += p.size * sin(p.angle / 180.0 * M_PI);
+          line(image, p.pt, index, color);
+        }
+      }
     }
   }
   else {
-    for (int i = 0; i < *dim; i++) {
-      (*result)[i] = 0.0;
+    for (int i = 0; i < dim; i++) {
+      result[i] = 0.0;
     }
   }
 }
