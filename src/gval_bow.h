@@ -53,6 +53,7 @@ typedef struct {
 
   FILE* out;
   bow_t* bow;
+  unsigned int nstop;
 } GvalBow;
 
 typedef struct {

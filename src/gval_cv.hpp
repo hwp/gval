@@ -36,6 +36,7 @@ typedef struct {
   int size;
   int dtotal;       // number of documents
   int* df;          // document frequency
+  int* rank;        // rank of df
   void* extractor;
 } bow_t;
 
@@ -101,7 +102,7 @@ void gval_free_bow(bow_t* bow);
  */
 EXTERNC
 void gval_bow_extract(void* img, int rows, int cols,
-    bow_t* bow, double** result, int* dim);
+    bow_t* bow, int nstop, double** result, int* dim);
 
 #undef EXTERNC
 

@@ -52,6 +52,7 @@ enum {
   PROP_FLUSH,
   PROP_LOCATION,
   PROP_VOCABULARY,
+  PROP_NSTOP,
   
   N_PROPERTIES
 };
@@ -106,6 +107,10 @@ static void gval_bow_class_init(GvalBowClass* klass) {
   bow_props[PROP_VOCABULARY] = g_param_spec_string(
       "vocabulary", "Vocabulary", "BoW vocabulary file",
       NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  bow_props[PROP_NSTOP] = g_param_spec_uint(
+      "nstop", "# of stopwords", "Number of words to be ignored",
+      0, 1024, 0,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties(gobject_class,
       N_PROPERTIES, bow_props);
@@ -156,6 +161,9 @@ void gval_bow_set_property(GObject* object, guint prop_id,
     case PROP_VOCABULARY:
       this->vocabulary = g_value_dup_string(value);
       break;
+    case PROP_NSTOP:
+      this->nstop = g_value_get_uint(value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
       break;
@@ -178,6 +186,9 @@ void gval_bow_get_property(GObject* object,
       break;
     case PROP_VOCABULARY:
       g_value_set_string(value, this->vocabulary);
+      break;
+    case PROP_NSTOP:
+      g_value_set_uint(value, this->nstop);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -228,7 +239,7 @@ static GstFlowReturn gval_bow_transform_frame_ip(GstVideoFilter* filter,
         GST_VIDEO_FRAME_PLANE_DATA(frame, 0),
         GST_VIDEO_FRAME_HEIGHT(frame),
         GST_VIDEO_FRAME_WIDTH(frame), 
-        this->bow, &descriptor, &dim);
+        this->bow, this->nstop, &descriptor, &dim);
 
     if (!this->silent) {
       printf("Image descriptor (dim %d) extracted.\n", dim);

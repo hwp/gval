@@ -133,6 +133,25 @@ void gval_free_cvmat(void* matrix) {
   delete mat;
 }
 
+int rank_cmp(const int* a, const int* b, int* value) {
+  return value[*b] - value[*a];
+}
+
+void compute_rank(int* value, int* rank, int size) {
+  int* order = (int*) malloc(sizeof(int) * size);
+  for (int i = 0; i < size; i++) {
+    order[i] = i;
+  }
+
+  qsort_r(order, size, sizeof(int),
+      (int (*)(const void*, const void*, void*))rank_cmp, value);
+  for (int i = 0; i < size; i++) {
+    rank[order[i]] = i;
+  }
+
+  free(order);
+}
+
 bow_t* gval_load_bow(const char* voc_file) {
   bow_t* ret = (bow_t*) malloc(sizeof(bow_t));
   assert(ret);
@@ -140,12 +159,19 @@ bow_t* gval_load_bow(const char* voc_file) {
   FILE* in = fopen(voc_file, "r");
   assert(in);
   Mat* voc = (Mat*) gval_read_cvmat(in);
-  ret->size = bow->getVocabulary().rows;
+  ret->size = voc->rows;
   ret->df = (int*) malloc(sizeof(int) * ret->size);
-  assert(ret->df);
+  ret->rank = (int*) malloc(sizeof(int) * ret->size);
+  assert(ret->df && ret->rank);
   fread(ret->df, sizeof(int), ret->size, in);
   fread(&ret->dtotal, sizeof(int), 1, in);
   fclose(in);
+
+  compute_rank(ret->df, ret->rank, ret->size);
+  // debug
+  for (int i = 0; i < ret->size; i++) {
+    fprintf(stderr, "%d %d\n", ret->df[i], ret->rank[i]);
+  }
 
   Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
   Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor); 
@@ -163,18 +189,22 @@ bow_t* gval_load_bow(const char* voc_file) {
 void gval_free_bow(bow_t* bow) {
   if (bow) {
     free(bow->df);
+    free(bow->rank);
     delete (BOWImgDescriptorExtractor*) bow->extractor;
     free(bow);
   }
 }
 
 void gval_bow_extract(void* img, int rows, int cols,
-    bow_t* bow, double** result, int* dim) {
+    bow_t* bow, int nstop, double** result, int* dim) {
   Mat image(rows, cols, CV_8UC3, img);
   BOWImgDescriptorExtractor extractor 
     = *(BOWImgDescriptorExtractor*) bow->extractor;
 
-  *dim = extractor.descriptorSize();
+  int dsize = extractor.descriptorSize();
+  *dim = dsize - nstop;
+  assert(*dim > 0);
+
   *result = (double*) malloc(sizeof(double) * *dim);
 
   SiftFeatureDetector detector;
@@ -186,12 +216,24 @@ void gval_bow_extract(void* img, int rows, int cols,
     extractor.compute(image, points, hist);
 
     assert(hist.rows == 1);
-    assert(hist.cols == extractor.descriptorSize());
+    assert(hist.cols == dsize);
     assert(hist.type() == CV_32F);
 
+    int c = 0;
+    double sum = 0.0;
+    for (int i = 0; i < dsize; i++) {
+      if (bow->rank[i] >= nstop) {
+        (*result)[c] = hist.at<float>(i)
+          * log((double) bow->dtotal / (double) bow->df[i]);
+        sum += (*result)[c] * (*result)[c];
+        c++;
+      }
+    }
+    assert(c == *dim);
+
+    sum = sqrt(sum);
     for (int i = 0; i < *dim; i++) {
-      (*result)[i] = hist.at<float>(i) 
-        * log((double) bow->dtotal / (double) bow->df[i]);
+      (*result)[c] /= sum;
     }
   }
   else {
