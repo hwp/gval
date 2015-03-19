@@ -208,7 +208,7 @@ Scalar gen_color(double hue) {
 }
 
 void gval_bow_extract(void* img, int rows, int cols,
-    bow_t* bow, int nstop, double* result, int dim) {
+    bow_t* bow, int nstop, double mscale, double* result, int dim) {
   Mat image(rows, cols, CV_8UC3, img);
   BOWImgDescriptorExtractor extractor 
     = *(BOWImgDescriptorExtractor*) bow->extractor;
@@ -218,8 +218,16 @@ void gval_bow_extract(void* img, int rows, int cols,
 
 
   SiftFeatureDetector detector;
+  std::vector<KeyPoint> apoints;
+  detector.detect(image, apoints);
+
   std::vector<KeyPoint> points;
-  detector.detect(image, points);
+  for (std::vector<KeyPoint>::const_iterator it = apoints.begin();
+      it != apoints.end(); it++) {
+    if (it->size > mscale) {
+      points.push_back(*it);
+    }
+  }
   
   if (!points.empty()) {
     Mat hist;

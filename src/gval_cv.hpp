@@ -101,7 +101,7 @@ void gval_free_bow(bow_t* bow);
  */
 EXTERNC
 void gval_bow_extract(void* img, int rows, int cols,
-    bow_t* bow, int nstop, double* result, int dim);
+    bow_t* bow, int nstop, double mscale, double* result, int dim);
 
 #undef EXTERNC
 

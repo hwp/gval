@@ -53,6 +53,7 @@ enum {
   PROP_LOCATION,
   PROP_VOCABULARY,
   PROP_NSTOP,
+  PROP_MSCALE,
   
   N_PROPERTIES
 };
@@ -111,6 +112,10 @@ static void gval_bow_class_init(GvalBowClass* klass) {
       "nstop", "# of stopwords", "Number of words to be ignored",
       0, 1024, 0,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  bow_props[PROP_MSCALE] = g_param_spec_double(
+      "mscale", "min scale", "minimal scale of keypoint (pixel)",
+      0.0, 1024.0, 0.0,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties(gobject_class,
       N_PROPERTIES, bow_props);
@@ -127,6 +132,8 @@ static void gval_bow_init(GvalBow* this) {
   this->flush = FALSE;
   this->location = NULL;
   this->vocabulary = NULL;
+  this->nstop = 0;
+  this->mscale = 0.0;
 
   this->out = NULL;
   this->bow = NULL;
@@ -164,6 +171,9 @@ void gval_bow_set_property(GObject* object, guint prop_id,
     case PROP_NSTOP:
       this->nstop = g_value_get_uint(value);
       break;
+    case PROP_MSCALE:
+      this->mscale = g_value_get_double(value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
       break;
@@ -189,6 +199,9 @@ void gval_bow_get_property(GObject* object,
       break;
     case PROP_NSTOP:
       g_value_set_uint(value, this->nstop);
+      break;
+    case PROP_MSCALE:
+      g_value_set_double(value, this->mscale);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -240,7 +253,7 @@ static GstFlowReturn gval_bow_transform_frame_ip(GstVideoFilter* filter,
         GST_VIDEO_FRAME_PLANE_DATA(frame, 0),
         GST_VIDEO_FRAME_HEIGHT(frame),
         GST_VIDEO_FRAME_WIDTH(frame), 
-        this->bow, this->nstop, descriptor, dim);
+        this->bow, this->nstop, this->mscale, descriptor, dim);
 
     if (!this->silent) {
       printf("Image descriptor (dim %d) extracted.\n", dim);
