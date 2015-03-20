@@ -50,11 +50,11 @@ typedef struct {
   gboolean flush;
   const gchar* location;
   const gchar* vocabulary;
+  unsigned int nstop;
+  double mscale;
 
   FILE* out;
   bow_t* bow;
-  unsigned int nstop;
-  double mscale;
 } GvalBow;
 
 typedef struct {

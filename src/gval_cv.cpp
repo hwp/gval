@@ -27,30 +27,46 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 
+using namespace cv;
+
+#include <vector>
+using std::vector;
+
 #include <stdlib.h>
 #include <assert.h>
 
-using namespace cv;
 
 void gval_draw_keypoints(void* img, int rows, int cols) {
   Mat image(rows, cols, CV_8UC3, img);
 
   SiftFeatureDetector detector;
-  std::vector<KeyPoint> points;
+  vector<KeyPoint> points;
   detector.detect(image, points);
 
   drawKeypoints(image, points, image, Scalar::all(-1),
       DrawMatchesFlags::DEFAULT);
 }
 
-void gval_extract_descriptor(void* img, int rows,
-    int cols, void** result, int* n_points, int* dim) {
+void gval_keypoint_filter(vector<KeyPoint>& points, double mscale) {
+  vector<KeyPoint> copy(points);
+  points.clear();
+  for (vector<KeyPoint>::const_iterator it = copy.begin();
+      it != copy.end(); it++) {
+    if (it->size > mscale) {
+      points.push_back(*it);
+    }
+  }
+}
+
+void gval_sift_descriptor(void* img, int rows, int cols,
+    double mscale, void** result, int* n_points, int* dim) {
   Mat image(rows, cols, CV_8UC3, img);
 
   SiftFeatureDetector detector;
-  std::vector<KeyPoint> points;
+  vector<KeyPoint> points;
   detector.detect(image, points);
-  
+  gval_keypoint_filter(points, mscale);
+
   SiftDescriptorExtractor extractor;
   Mat* descriptor = new Mat();
   extractor.compute(image, points, *descriptor);
@@ -218,17 +234,10 @@ void gval_bow_extract(void* img, int rows, int cols,
 
 
   SiftFeatureDetector detector;
-  std::vector<KeyPoint> apoints;
-  detector.detect(image, apoints);
+  vector<KeyPoint> points;
+  detector.detect(image, points);
+  gval_keypoint_filter(points, mscale);
 
-  std::vector<KeyPoint> points;
-  for (std::vector<KeyPoint>::const_iterator it = apoints.begin();
-      it != apoints.end(); it++) {
-    if (it->size > mscale) {
-      points.push_back(*it);
-    }
-  }
-  
   if (!points.empty()) {
     Mat hist;
     vector<vector<int> > pids;
@@ -261,7 +270,7 @@ void gval_bow_extract(void* img, int rows, int cols,
     for (int i = 0; i < dsize; i++) {
       if (bow->rank[i] >= nstop) {
         Scalar color = gen_color((double) i / (double) dsize);
-        for (std::vector<int>::const_iterator it = pids[i].begin(); it != pids[i].end(); it++) {
+        for (vector<int>::const_iterator it = pids[i].begin(); it != pids[i].end(); it++) {
           KeyPoint p = points[*it];
           RotatedRect rRect(p.pt, Size2f(2.0 * p.size, 2.0* p.size), p.angle);
           Point2f vertices[4];

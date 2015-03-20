@@ -46,6 +46,7 @@ typedef struct {
 
   gboolean silent;
   const gchar* location;
+  double mscale;
 
   FILE* out;
 } GvalSift;

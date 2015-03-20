@@ -50,6 +50,7 @@ enum {
 
   PROP_SILENT,
   PROP_LOCATION,
+  PROP_MSCALE,
   
   N_PROPERTIES
 };
@@ -98,6 +99,10 @@ static void gval_sift_class_init(GvalSiftClass* klass) {
   sift_props[PROP_LOCATION] = g_param_spec_string(
       "location", "Location", "Path to the output file",
       NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  sift_props[PROP_MSCALE] = g_param_spec_double(
+      "mscale", "min scale", "minimal scale of keypoint (pixel)",
+      0.0, 1024.0, 0.0,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties(gobject_class,
       N_PROPERTIES, sift_props);
@@ -112,6 +117,7 @@ static void gval_sift_class_init(GvalSiftClass* klass) {
 static void gval_sift_init(GvalSift* this) {
   this->silent = FALSE;
   this->location = NULL;
+  this->mscale = 0.0;
 
   this->out = NULL;
 }
@@ -137,6 +143,9 @@ void gval_sift_set_property(GObject* object, guint prop_id,
     case PROP_LOCATION:
       this->location = g_value_dup_string(value);
       break;
+    case PROP_MSCALE:
+      this->mscale = g_value_get_double(value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
       break;
@@ -153,6 +162,9 @@ void gval_sift_get_property(GObject* object,
       break;
     case PROP_LOCATION:
       g_value_set_string(value, this->location);
+      break;
+    case PROP_MSCALE:
+      g_value_set_double(value, this->mscale);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -195,10 +207,10 @@ static GstFlowReturn gval_sift_transform_frame_ip(GstVideoFilter* filter,
     void* descriptor = NULL;
     int n_points;
     int dim;
-    gval_extract_descriptor(
+    gval_sift_descriptor(
         GST_VIDEO_FRAME_PLANE_DATA(frame, 0),
         GST_VIDEO_FRAME_HEIGHT(frame),
-        GST_VIDEO_FRAME_WIDTH(frame), 
+        GST_VIDEO_FRAME_WIDTH(frame), this->mscale,
         &descriptor, &n_points, &dim);
 
     if (!this->silent) {

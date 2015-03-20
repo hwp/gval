@@ -55,8 +55,8 @@ void gval_draw_keypoints(void* img, int rows, int cols);
  * It should be freed using gval_free_cvmat().
  */
 EXTERNC
-void gval_extract_descriptor(void* img, int rows,
-    int cols, void** result, int* n_points, int* dim);
+void gval_sift_descriptor(void* img, int rows, int cols,
+    double mscale, void** result, int* n_points, int* dim);
 
 /**
  * Write a cv::Mat to stream.
