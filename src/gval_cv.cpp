@@ -47,7 +47,7 @@ void gval_draw_keypoints(void* img, int rows, int cols) {
       DrawMatchesFlags::DEFAULT);
 }
 
-void gval_keypoint_filter(vector<KeyPoint>& points, double mscale) {
+static void gval_keypoint_filter(vector<KeyPoint>& points, double mscale) {
   vector<KeyPoint> copy(points);
   points.clear();
   for (vector<KeyPoint>::const_iterator it = copy.begin();
@@ -211,7 +211,7 @@ void gval_free_bow(bow_t* bow) {
   }
 }
 
-Scalar gen_color(double hue) {
+static Scalar gen_color(double hue) {
   double g = fmax(1 - fabs(hue - 1.0 / 3.0), 0);
   double b = fmax(1 - fabs(hue - 2.0 / 3.0), 0);
 

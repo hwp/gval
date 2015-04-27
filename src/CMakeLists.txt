@@ -25,6 +25,9 @@ add_executable(build_voc build_voc.cpp gval_cv.cpp gval_utils.c)
 target_link_libraries(build_voc ${OpenCV_LIBS} ${FFTW_LIBRARIES}
   ${Boost_LIBRARIES})
 
+add_executable(draw_keypoints draw_keypoints.cpp gval_cv.cpp gval_utils.c)
+target_link_libraries(draw_keypoints ${OpenCV_LIBS} ${FFTW_LIBRARIES})
+
 add_executable(gval_voc_size gval_voc_size.cpp gval_cv.cpp)
 target_link_libraries(gval_voc_size ${OpenCV_LIBS})
 
