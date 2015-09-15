@@ -98,9 +98,13 @@ int main(int argc, char** argv) {
     = *(BOWImgDescriptorExtractor*) bow->extractor;
 
   Mat image, raw;
-  raw = imread(argv[optind]); // Read the file
+  string name(argv[optind]);
+  raw = imread(name); // Read the file
   assert(raw.data);
-
+  size_t e = name.rfind('.');
+  size_t s = name.rfind('/') + 1;
+  name = name.substr(s, e - s);
+ 
   cvtColor(raw, image, CV_BGR2GRAY);
 
   SiftFeatureDetector detector;
@@ -137,17 +141,16 @@ int main(int argc, char** argv) {
         line(full, p.pt, index, color);
       }
     }
-    imwrite("full.png", full, compression_params);
+    imwrite(name + "_full.png", full, compression_params);
 
     for (int i = 0; i < dsize; i++) {
       for (int j = 0; j < pids[i].size(); j++) {
         KeyPoint p = points[pids[i][j]];
         Mat patch = get_patch(p, raw);
         std::stringstream ss;
-        ss << "abc_" << i << "_" << j << ".png";
-        string name = ss.str();
+        ss << name << "_v" << i << "_" << j << ".png";
 
-        imwrite(name, patch, compression_params);
+        imwrite(ss.str(), patch, compression_params);
       }
     }
 
