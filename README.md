@@ -17,7 +17,8 @@ This library is implemented as a GStreamer plugin.
   * SIFT
   * Bag-of-words model with SIFT
 
-## Dependency
+## Installation Guide
+### Dependency
 Prior to the installation of this library, please make sure you have these dependent libraries installed and can be found by pkg-config.
 
 * [GStreamer](http://gstreamer.freedesktop.org/) and its components:
@@ -57,5 +58,26 @@ The default directory for installation is `/usr/local`. To change the installati
 cmake -DCMAKE_INSTALL_PREFIX=/desired/directory ..
 ```
 
-## Setup
+## Usage
+### Check Plugin Information
+Upon successful installation, you should be able to find GStreamer plugin named `gval_plugin` with `gst-inspect-1.0`. By doing
+```
+gst-inspect-1.0 gval_plugin
+```
+You can find the information about this plugin.
+
+>**Note**:
+>If GStreamer can't find the plugin, please make sure the installed library, i.e. `libgval.so` is in the GStreamer plugin path, which is normally `/usr/local/lib/gstreamer-1.0` or environment variable `GST_PLUGIN_PATH` is set properly according to the actual path. 
+>For example, if `libgval.so` is installed in `~/.local/lib/gstreamer-1.0`, `GST_PLUGIN_PATH` should be set to `$HOME/.local/lib`.
+
+### Plugin Elements
+This plugin contains five elements:
+
+| Element   | Full Name |
+| --------- | --------- |
+| bow       | Bag-of-words Model with SIFT descriptors |
+| mfcc      | Mel-frequency cepstrum coefficients |
+| keypoints | Key Points                          |
+| sift      | Scale invariant feature transform   |
+| stft      | Short time Fourier transform        |
 
